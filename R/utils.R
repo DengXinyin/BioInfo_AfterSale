@@ -1,0 +1,83 @@
+.assert_choice <- function(value, choices, argument) {
+  if (length(value) != 1L || is.na(value) || !value %in% choices) {
+    stop(
+      sprintf("`%s` must be one of: %s.", argument, paste(choices, collapse = ", ")),
+      call. = FALSE
+    )
+  }
+  value
+}
+
+.assert_probability <- function(value, argument) {
+  if (length(value) != 1L || !is.numeric(value) || is.na(value) ||
+      value < 0 || value > 1) {
+    stop(sprintf("`%s` must be a number between 0 and 1.", argument), call. = FALSE)
+  }
+  value
+}
+
+.assert_positive_number <- function(value, argument) {
+  if (length(value) != 1L || !is.numeric(value) || is.na(value) || value <= 0) {
+    stop(sprintf("`%s` must be a positive number.", argument), call. = FALSE)
+  }
+  value
+}
+
+.clean_gene_ids <- function(gene, argument = "gene") {
+  if (is.factor(gene)) gene <- as.character(gene)
+  if (!is.atomic(gene)) {
+    stop(sprintf("`%s` must be an atomic vector of gene IDs.", argument), call. = FALSE)
+  }
+  gene <- trimws(as.character(gene))
+  gene <- unique(gene[!is.na(gene) & nzchar(gene)])
+  if (!length(gene)) {
+    stop(sprintf("`%s` contains no usable gene IDs.", argument), call. = FALSE)
+  }
+  gene
+}
+
+.resolve_orgdb <- function(org_db = NULL, species = NULL) {
+  if (!is.null(org_db)) return(org_db)
+  if (is.null(species)) {
+    stop("GO analysis requires either `org_db` or `species`.", call. = FALSE)
+  }
+
+  species_key <- tolower(trimws(species))
+  aliases <- c(
+    human = "org.Hs.eg.db", homo_sapiens = "org.Hs.eg.db", hsa = "org.Hs.eg.db",
+    mouse = "org.Mm.eg.db", mus_musculus = "org.Mm.eg.db", mmu = "org.Mm.eg.db",
+    rat = "org.Rn.eg.db", rattus_norvegicus = "org.Rn.eg.db", rno = "org.Rn.eg.db"
+  )
+  package <- unname(aliases[[species_key]])
+  if (is.null(package)) {
+    stop(
+      "Unsupported `species`. Use human/hsa, mouse/mmu, rat/rno, or provide `org_db`.",
+      call. = FALSE
+    )
+  }
+  if (!requireNamespace(package, quietly = TRUE)) {
+    stop(sprintf("Package '%s' is required for this GO analysis.", package), call. = FALSE)
+  }
+  get(package, envir = asNamespace(package))
+}
+
+.normalise_result_table <- function(result) {
+  if (methods::is(result, "enrichResult") || methods::is(result, "gseaResult")) {
+    return(as.data.frame(result))
+  }
+  if (is.data.frame(result)) return(result)
+  stop("`result` must be an enrichResult, gseaResult, or data.frame.", call. = FALSE)
+}
+
+.filter_result_object <- function(result, filter_by, cutoff) {
+  if (!methods::is(result, "enrichResult") && !methods::is(result, "gseaResult")) {
+    stop("Filtering for enrichplot requires an enrichResult or gseaResult object.", call. = FALSE)
+  }
+  table <- as.data.frame(result)
+  if (!filter_by %in% names(table)) {
+    stop(sprintf("Column '%s' is not present in the enrichment result.", filter_by), call. = FALSE)
+  }
+  keep <- !is.na(table[[filter_by]]) & table[[filter_by]] <= cutoff
+  result@result <- result@result[keep, , drop = FALSE]
+  result
+}

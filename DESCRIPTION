@@ -1,0 +1,28 @@
+Package: BioInfoAfterSale
+Type: Package
+Title: Reusable Bioinformatics After-Sales Analysis Workflows
+Version: 0.1.0
+Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
+    email = "DengXinyin@users.noreply.github.com")
+Description: Provides simple, reusable entry points for bioinformatics
+    after-sales analyses. The first module runs GO or KEGG over-representation
+    analysis with 'clusterProfiler', visualizes enrichment results with
+    'enrichplot' and 'ggplot2', and exposes common report styling options.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 4.2.0)
+Imports:
+    clusterProfiler,
+    enrichplot,
+    ggplot2,
+    graphics,
+    methods
+Suggests:
+    org.Hs.eg.db,
+    org.Mm.eg.db,
+    org.Rn.eg.db,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
+Roxygen: list(markdown = TRUE)

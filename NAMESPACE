@@ -1,0 +1,4 @@
+export(enrichment_plot)
+export(plot_enrichment)
+export(run_enrichment)
+S3method(print,bioinfo_enrichment)

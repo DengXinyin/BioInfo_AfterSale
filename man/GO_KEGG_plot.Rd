@@ -22,6 +22,7 @@ GO_KEGG_plot(
   legend_text_size = max(base_size - 2, 1),
   legend_position = "right",
   label_format = 40,
+  style = NULL,
   ...
 )
 }
@@ -60,6 +61,9 @@ GO_KEGG_plot(
 \item{legend_position}{A ggplot2 legend position.}
 
 \item{label_format}{Maximum label width used by enrichplot.}
+
+\item{style}{Optional object returned by \code{\link[=choose_plot_style]{choose_plot_style()}}. When
+supplied, it replaces the individual legacy font and legend arguments.}
 
 \item{...}{Additional arguments passed to the enrichplot function.}
 }

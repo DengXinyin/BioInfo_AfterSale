@@ -1,7 +1,7 @@
 Package: BioInfoAfterSale
 Type: Package
 Title: Reusable Bioinformatics After-Sales Analysis Workflows
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
     email = "DengXinyin@users.noreply.github.com")
 Description: Provides simple, reusable entry points for bioinformatics

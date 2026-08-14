@@ -23,6 +23,8 @@
 #' @param legend_text_size Optional legend text size.
 #' @param legend_position A ggplot2 legend position.
 #' @param label_format Maximum label width used by enrichplot.
+#' @param style Optional object returned by [choose_plot_style()]. When
+#'   supplied, it replaces the individual legacy font and legend arguments.
 #' @param ... Additional arguments passed to the enrichplot function.
 #'
 #' @return A ggplot object.
@@ -45,6 +47,7 @@ GO_KEGG_plot <- function(
     legend_text_size = max(base_size - 2, 1),
     legend_position = "right",
     label_format = 40,
+    style = NULL,
     ...) {
 
   plot_type <- match.arg(plot_type)
@@ -52,6 +55,23 @@ GO_KEGG_plot <- function(
   .assert_probability(cutoff, "cutoff")
   .assert_positive_number(show_category, "show_category")
   .assert_positive_number(base_size, "base_size")
+  if (is.null(style)) {
+    style <- choose_plot_style(
+      font_family = font_family,
+      title = list(size = title_size),
+      axis_title = list(size = base_size),
+      axis_text = list(size = axis_text_size),
+      legend_title = list(size = base_size),
+      legend_text = list(size = legend_text_size),
+      legend = list(
+        show = !identical(legend_position, "none"),
+        position = legend_position
+      )
+    )
+  }
+  if (!inherits(style, "bioinfo_plot_style")) {
+    stop("`style` must be created by `choose_plot_style()`.", call. = FALSE)
+  }
 
   filtered <- .filter_result_object(result, filter_by, cutoff)
   if (!nrow(as.data.frame(filtered))) {
@@ -70,22 +90,5 @@ GO_KEGG_plot <- function(
     )
   }
 
-  plot +
-    ggplot2::labs(title = title) +
-    ggplot2::theme_bw(base_size = base_size, base_family = font_family) +
-    ggplot2::theme(
-      plot.title = ggplot2::element_text(
-        family = font_family, size = title_size, hjust = 0.5
-      ),
-      axis.title = ggplot2::element_text(family = font_family, size = base_size),
-      axis.text = ggplot2::element_text(
-        family = font_family, size = axis_text_size, color = "black"
-      ),
-      legend.title = ggplot2::element_text(family = font_family, size = base_size),
-      legend.text = ggplot2::element_text(
-        family = font_family, size = legend_text_size
-      ),
-      legend.position = legend_position,
-      panel.grid.minor = ggplot2::element_blank()
-    )
+  plot + ggplot2::labs(title = title) + style$ggplot_theme
 }

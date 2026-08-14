@@ -1,3 +1,4 @@
 export(GO_KEGG)
 export(GO_KEGG_analyse)
 export(GO_KEGG_plot)
+export(choose_plot_style)

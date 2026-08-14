@@ -4,11 +4,12 @@
 过度富集分析及可视化，统计计算基于 `clusterProfiler`，基础绘图基于
 `enrichplot`，并使用 `ggplot2` 统一常见的字体、字号、标题和图例设置。
 
-## 三个函数
+## 主要函数
 
 - `GO_KEGG_analyse()`：只做 GO 或 KEGG 富集分析；
 - `GO_KEGG_plot()`：只对已有的 `enrichResult`/`gseaResult` 绘图；
 - `GO_KEGG()`：统一入口，自动串联前两个函数。
+- `choose_plot_style()`：创建可供所有 ggplot2 图形复用的统一样式。
 
 ## 安装
 
@@ -48,6 +49,35 @@ go <- GO_KEGG(
 go$plot
 go$table
 ```
+
+## 统一可视化样式
+
+```r
+style <- choose_plot_style(
+  font_family = "Arial",
+  theme = "bw",
+  dpi = 300,
+  figure_width = 12,
+  figure_height = 10,
+  title = list(size = 22, bold = TRUE, align = "center"),
+  axis_title = list(size = 18),
+  axis_text = list(size = 16),
+  legend_title = list(size = 18),
+  legend_text = list(size = 15),
+  facet_label = list(size = 17, bold = TRUE),
+  legend = list(show = TRUE, position = "bottom", frame = FALSE)
+)
+
+p <- GO_KEGG_plot(
+  existing_enrich_result,
+  filter_by = "pvalue",
+  cutoff = 0.05,
+  style = style
+)
+```
+
+样式对象还保存了 `dpi`、默认画布宽高和 `group_palette`，后续其他售后绘图
+函数可以直接复用同一套接口。
 
 `pvalue_cutoff` 是富集计算阶段传给 `clusterProfiler` 的参数；`filter_by` 和
 `cutoff` 是绘图前采用的筛选口径。因此可明确实现“按照原始 P 值而不是校正后

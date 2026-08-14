@@ -1,3 +1,9 @@
+.plot_null_default <- function(left, right) {
+  if (is.null(left)) right else left
+}
+
+`%||%` <- .plot_null_default
+
 .assert_choice <- function(value, choices, argument) {
   if (length(value) != 1L || is.na(value) || !value %in% choices) {
     stop(

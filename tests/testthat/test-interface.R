@@ -36,6 +36,34 @@ test_that("GO_KEGG_plot supports custom table mappings", {
   expect_equal(sort(plot$data$.XValue), sort(-log10(table$pvalue)))
 })
 
+test_that("GO_KEGG_plot saves selectable inch dimensions", {
+  table <- data.frame(
+    Description = c("Pathway A", "Pathway B"),
+    pvalue = c(0.001, 0.02),
+    RichFactor = c(2.5, 4.2),
+    Count = c(5, 9)
+  )
+  output <- tempfile(fileext = ".pdf")
+  style <- choose_plot_style(font_family = "sans")
+  plot <- GO_KEGG_plot(
+    table,
+    filter_by = NULL,
+    x = "pvalue",
+    x_transform = "neg_log10",
+    color = "RichFactor",
+    style = style,
+    output_file = output,
+    figure_width = 11,
+    figure_height = 6,
+    dpi = 200
+  )
+  expect_true(file.exists(output))
+  expect_gt(file.info(output)$size, 0)
+  expect_equal(attr(plot, "figure_width"), 11)
+  expect_equal(attr(plot, "figure_height"), 6)
+  expect_equal(attr(plot, "dpi"), 200)
+})
+
 test_that("choose_plot_style creates and validates a shared style", {
   style <- choose_plot_style(
     font_family = "Arial",

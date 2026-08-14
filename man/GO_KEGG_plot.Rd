@@ -29,7 +29,13 @@ GO_KEGG_plot(
   color_label = NULL,
   size_label = NULL,
   color_palette = c("#2166AC", "#00BFC4", "#7AD151", "#FDE725", "#D73027"),
+  size_breaks = NULL,
   style = NULL,
+  output_file = NULL,
+  figure_width = NULL,
+  figure_height = NULL,
+  dpi = NULL,
+  device = NULL,
   ...
 )
 }
@@ -82,8 +88,22 @@ data-frame plots.}
 
 \item{color_palette}{Continuous colors used for data-frame plots.}
 
+\item{size_breaks}{Optional numeric Count legend breaks for data-frame dot
+plots.}
+
 \item{style}{Optional object returned by \code{\link[=choose_plot_style]{choose_plot_style()}}. When
 supplied, it replaces the individual legacy font and legend arguments.}
+
+\item{output_file}{Optional output filename. When supplied, the function
+saves the plot and still returns the ggplot object.}
+
+\item{figure_width, figure_height}{Output width and height in inches. \code{NULL}
+uses the values stored in \code{style}.}
+
+\item{dpi}{Output resolution. \code{NULL} uses the value stored in \code{style}.}
+
+\item{device}{Optional graphics device passed to \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}. PDF
+files default to \code{\link[grDevices:cairo_pdf]{grDevices::cairo_pdf()}}.}
 
 \item{...}{Additional arguments passed to the enrichplot function.}
 }

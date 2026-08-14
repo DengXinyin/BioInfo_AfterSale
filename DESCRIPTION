@@ -1,7 +1,7 @@
 Package: BioInfoAfterSale
 Type: Package
 Title: Reusable Bioinformatics After-Sales Analysis Workflows
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
     email = "DengXinyin@users.noreply.github.com")
 Description: Provides simple, reusable entry points for bioinformatics
@@ -17,7 +17,8 @@ Imports:
     enrichplot,
     ggplot2,
     graphics,
-    methods
+    methods,
+    tools
 Suggests:
     org.Hs.eg.db,
     org.Mm.eg.db,

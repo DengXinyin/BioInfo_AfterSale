@@ -30,8 +30,17 @@
 #' @param x_label,color_label,size_label Optional legend and axis labels for
 #'   data-frame plots.
 #' @param color_palette Continuous colors used for data-frame plots.
+#' @param size_breaks Optional numeric Count legend breaks for data-frame dot
+#'   plots.
 #' @param style Optional object returned by [choose_plot_style()]. When
 #'   supplied, it replaces the individual legacy font and legend arguments.
+#' @param output_file Optional output filename. When supplied, the function
+#'   saves the plot and still returns the ggplot object.
+#' @param figure_width,figure_height Output width and height in inches. `NULL`
+#'   uses the values stored in `style`.
+#' @param dpi Output resolution. `NULL` uses the value stored in `style`.
+#' @param device Optional graphics device passed to [ggplot2::ggsave()]. PDF
+#'   files default to [grDevices::cairo_pdf()].
 #' @param ... Additional arguments passed to the enrichplot function.
 #'
 #' @return A ggplot object.
@@ -61,7 +70,13 @@ GO_KEGG_plot <- function(
     color_label = NULL,
     size_label = NULL,
     color_palette = c("#2166AC", "#00BFC4", "#7AD151", "#FDE725", "#D73027"),
+    size_breaks = NULL,
     style = NULL,
+    output_file = NULL,
+    figure_width = NULL,
+    figure_height = NULL,
+    dpi = NULL,
+    device = NULL,
     ...) {
 
   color_was_missing <- missing(color)
@@ -161,7 +176,9 @@ GO_KEGG_plot <- function(
         ggplot2::aes(x = .XValue, y = .Label, color = .ColorValue, size = .SizeValue)
       ) +
         ggplot2::geom_point(alpha = 0.9) +
-        ggplot2::scale_size_continuous(name = size_label, range = c(4, 12))
+        ggplot2::scale_size_continuous(
+          name = size_label, range = c(4, 12), breaks = size_breaks
+        )
     } else {
       plot <- ggplot2::ggplot(
         table, ggplot2::aes(x = .XValue, y = .Label, fill = .ColorValue)
@@ -172,7 +189,9 @@ GO_KEGG_plot <- function(
       ggplot2::scale_fill_gradientn(colors = color_palette, name = color_label) +
       ggplot2::labs(x = x_label, y = NULL, title = title) +
       style$ggplot_theme
-    return(plot)
+    return(.finish_enrichment_plot(
+      plot, style, output_file, figure_width, figure_height, dpi, device
+    ))
   }
 
   if (!methods::is(result, "enrichResult") && !methods::is(result, "gseaResult")) {
@@ -197,5 +216,47 @@ GO_KEGG_plot <- function(
     )
   }
 
-  plot + ggplot2::labs(title = title) + style$ggplot_theme
+  plot <- plot + ggplot2::labs(title = title) + style$ggplot_theme
+  .finish_enrichment_plot(
+    plot, style, output_file, figure_width, figure_height, dpi, device
+  )
+}
+
+.finish_enrichment_plot <- function(
+    plot, style, output_file, figure_width, figure_height, dpi, device) {
+  figure_width <- figure_width %||% style$global$figure_width
+  figure_height <- figure_height %||% style$global$figure_height
+  dpi <- dpi %||% style$global$dpi
+  .assert_positive_number(figure_width, "figure_width")
+  .assert_positive_number(figure_height, "figure_height")
+  .assert_positive_number(dpi, "dpi")
+
+  attr(plot, "figure_width") <- figure_width
+  attr(plot, "figure_height") <- figure_height
+  attr(plot, "dpi") <- dpi
+
+  if (!is.null(output_file)) {
+    if (!is.character(output_file) || length(output_file) != 1L ||
+        is.na(output_file) || !nzchar(output_file)) {
+      stop("`output_file` must be one non-empty filename.", call. = FALSE)
+    }
+    output_dir <- dirname(output_file)
+    if (!dir.exists(output_dir)) {
+      stop("Output directory does not exist: ", output_dir, call. = FALSE)
+    }
+    if (is.null(device) && identical(tolower(tools::file_ext(output_file)), "pdf")) {
+      device <- grDevices::cairo_pdf
+    }
+    save_args <- list(
+      filename = output_file,
+      plot = plot,
+      width = figure_width,
+      height = figure_height,
+      units = "in",
+      dpi = dpi
+    )
+    if (!is.null(device)) save_args$device <- device
+    do.call(ggplot2::ggsave, save_args)
+  }
+  plot
 }

@@ -76,6 +76,25 @@ p <- GO_KEGG_plot(
 )
 ```
 
+`GO_KEGG_plot()` 可以直接按英寸保存指定画布大小：
+
+```r
+p <- GO_KEGG_plot(
+  selected_pathways,
+  filter_by = NULL,
+  x = "pvalue",
+  x_transform = "neg_log10",
+  color = "RichFactor",
+  output_file = "GO_enrichment.pdf",
+  figure_width = 15,
+  figure_height = 7,
+  dpi = 300
+)
+```
+
+不提供 `figure_width`、`figure_height` 或 `dpi` 时，使用
+`choose_plot_style()` 样式对象中保存的默认值。
+
 样式对象还保存了 `dpi`、默认画布宽高和 `group_palette`，后续其他售后绘图
 函数可以直接复用同一套接口。
 

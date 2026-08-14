@@ -29,6 +29,31 @@
   value
 }
 
+.assert_numeric_vector <- function(
+    value, argument, length_required = NULL, positive = FALSE) {
+  if (!is.numeric(value) || !length(value) || anyNA(value) ||
+      any(!is.finite(value))) {
+    stop(sprintf("`%s` must be a finite numeric vector.", argument), call. = FALSE)
+  }
+  if (!is.null(length_required) && length(value) != length_required) {
+    stop(
+      sprintf("`%s` must contain exactly %d values.", argument, length_required),
+      call. = FALSE
+    )
+  }
+  if (positive && any(value <= 0)) {
+    stop(sprintf("`%s` values must be positive.", argument), call. = FALSE)
+  }
+  value
+}
+
+.assert_flag <- function(value, argument) {
+  if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+    stop(sprintf("`%s` must be TRUE or FALSE.", argument), call. = FALSE)
+  }
+  value
+}
+
 .clean_gene_ids <- function(gene, argument = "gene") {
   if (is.factor(gene)) gene <- as.character(gene)
   if (!is.atomic(gene)) {

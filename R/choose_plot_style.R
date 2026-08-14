@@ -83,6 +83,7 @@
   )
   text <- config$text
   legend <- config$legend
+  panel <- config$panel
   legend_position <- if (legend$show) legend$position else "none"
   legend_background <- if (legend$frame) {
     ggplot2::element_rect(color = "black", fill = "white", linewidth = 0.5)
@@ -100,9 +101,31 @@
     legend.text = .text_element(text$legend_text, config$global$font_family),
     strip.text = .text_element(text$facet_label, config$global$font_family),
     legend.position = legend_position,
+    legend.box = legend$box,
+    legend.box.just = legend$box_just,
     legend.background = legend_background,
     legend.box.background = legend_background,
-    panel.grid.minor = ggplot2::element_blank()
+    panel.border = if (panel$border) {
+      ggplot2::element_rect(
+        color = panel$border_color, fill = NA, linewidth = panel$border_width
+      )
+    } else {
+      ggplot2::element_blank()
+    },
+    panel.grid.major = if (panel$major_grid) {
+      ggplot2::element_line(
+        color = panel$major_grid_color, linewidth = panel$major_grid_width
+      )
+    } else {
+      ggplot2::element_blank()
+    },
+    panel.grid.minor = if (panel$minor_grid) {
+      ggplot2::element_line(
+        color = panel$minor_grid_color, linewidth = panel$minor_grid_width
+      )
+    } else {
+      ggplot2::element_blank()
+    }
   )
 }
 
@@ -121,12 +144,16 @@
 #' @param title,subtitle,axis_title,axis_text,legend_title,legend_text,data_label,facet_label
 #'   Named lists overriding `font_family`, `size`, `bold`, `italic`, `align`,
 #'   or `show` for each semantic text element.
-#' @param legend Named list overriding `show`, `position`, or `frame`.
+#' @param legend Named list overriding `show`, `position`, `frame`, `box`, or
+#'   `box_just`.
+#' @param panel Named list controlling `border`, `border_color`,
+#'   `border_width`, `major_grid`, `minor_grid`, their colors, and their line
+#'   widths.
 #' @param group_palette Character vector of group colors. `NULL` uses the
 #'   package's default 12-color palette.
 #'
 #' @return A `bioinfo_plot_style` list containing `global`, `text`, `legend`,
-#'   `group_palette`, and the generated `ggplot_theme`.
+#'   `panel`, `group_palette`, and the generated `ggplot_theme`.
 #' @export
 choose_plot_style <- function(
     font_family = "Times New Roman",
@@ -143,6 +170,7 @@ choose_plot_style <- function(
     data_label = list(),
     facet_label = list(),
     legend = list(),
+    panel = list(),
     group_palette = NULL) {
 
   theme <- match.arg(theme)
@@ -168,7 +196,11 @@ choose_plot_style <- function(
   }
 
   legend <- .merge_plot_style(
-    list(show = TRUE, position = "right", frame = FALSE), legend
+    list(
+      show = TRUE, position = "right", frame = FALSE,
+      box = "vertical", box_just = "center"
+    ),
+    legend
   )
   for (field in c("show", "frame")) {
     if (!is.logical(legend[[field]]) || length(legend[[field]]) != 1L ||
@@ -180,6 +212,35 @@ choose_plot_style <- function(
     legend$position, c("left", "right", "top", "bottom", "none"),
     "legend$position"
   )
+  .assert_choice(legend$box, c("vertical", "horizontal"), "legend$box")
+  .assert_choice(legend$box_just, c("left", "center", "right"), "legend$box_just")
+
+  panel <- .merge_plot_style(
+    list(
+      border = identical(theme, "bw"),
+      border_color = "black",
+      border_width = 0.8,
+      major_grid = identical(theme, "bw"),
+      minor_grid = FALSE,
+      major_grid_color = "#D9D9D9",
+      minor_grid_color = "#EEEEEE",
+      major_grid_width = 0.5,
+      minor_grid_width = 0.3
+    ),
+    panel
+  )
+  for (field in c("border", "major_grid", "minor_grid")) {
+    .assert_flag(panel[[field]], paste0("panel$", field))
+  }
+  for (field in c("border_color", "major_grid_color", "minor_grid_color")) {
+    value <- panel[[field]]
+    if (!is.character(value) || length(value) != 1L || is.na(value) || !nzchar(value)) {
+      stop("`panel$", field, "` must be one non-empty color value.", call. = FALSE)
+    }
+  }
+  for (field in c("border_width", "major_grid_width", "minor_grid_width")) {
+    .assert_positive_number(panel[[field]], paste0("panel$", field))
+  }
   if (!is.character(group_palette) || !length(group_palette) ||
       anyNA(group_palette) || any(!nzchar(group_palette))) {
     stop("`group_palette` must be a non-empty character vector.", call. = FALSE)
@@ -195,6 +256,7 @@ choose_plot_style <- function(
     ),
     text = text,
     legend = legend,
+    panel = panel,
     group_palette = group_palette
   )
   config$ggplot_theme <- .build_ggplot_theme(config)

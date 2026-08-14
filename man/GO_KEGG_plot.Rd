@@ -26,10 +26,17 @@ GO_KEGG_plot(
   legend_position = "right",
   label_format = 40,
   x_label = NULL,
+  y_label = NULL,
   color_label = NULL,
   size_label = NULL,
   color_palette = c("#2166AC", "#00BFC4", "#7AD151", "#FDE725", "#D73027"),
   size_breaks = NULL,
+  size_range = c(4, 12),
+  point_alpha = 0.9,
+  x_limits = NULL,
+  x_breaks = NULL,
+  x_expand = NULL,
+  legend_order = c("color", "size"),
   style = NULL,
   output_file = NULL,
   figure_width = NULL,
@@ -83,13 +90,28 @@ GO_KEGG_plot(
 
 \item{label_format}{Maximum label width used by enrichplot.}
 
-\item{x_label, color_label, size_label}{Optional legend and axis labels for
-data-frame plots.}
+\item{x_label, y_label}{Optional axis labels. Labels can be character values
+or plotmath expressions such as \code{expression(-log[10](Pvalue))}.}
+
+\item{color_label, size_label}{Optional legend labels for data-frame plots.}
 
 \item{color_palette}{Continuous colors used for data-frame plots.}
 
 \item{size_breaks}{Optional numeric Count legend breaks for data-frame dot
-plots.}
+plots. \code{NULL} uses ggplot2 automatic breaks.}
+
+\item{size_range}{Two positive numbers defining the minimum and maximum
+point sizes.}
+
+\item{point_alpha}{Point opacity from 0 to 1.}
+
+\item{x_limits, x_breaks}{Optional numeric X-axis limits and breaks.}
+
+\item{x_expand}{Optional numeric expansion passed to
+\code{\link[ggplot2:scale_x_continuous]{ggplot2::scale_x_continuous()}}.}
+
+\item{legend_order}{Character vector defining guide order. Supported values
+are \code{"color"} and \code{"size"}.}
 
 \item{style}{Optional object returned by \code{\link[=choose_plot_style]{choose_plot_style()}}. When
 supplied, it replaces the individual legacy font and legend arguments.}

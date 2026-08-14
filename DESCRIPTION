@@ -1,9 +1,11 @@
 Package: BioInfoAfterSale
 Type: Package
 Title: Reusable Bioinformatics After-Sales Analysis Workflows
-Version: 0.1.3
+Version: 0.2.0
 Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
     email = "DengXinyin@users.noreply.github.com")
+Author: Xinyin Deng [aut, cre]
+Maintainer: Xinyin Deng <DengXinyin@users.noreply.github.com>
 Description: Provides simple, reusable entry points for bioinformatics
     after-sales analyses. The first module runs GO or KEGG over-representation
     analysis with 'clusterProfiler', visualizes enrichment results with
@@ -15,8 +17,12 @@ Depends:
 Imports:
     clusterProfiler,
     enrichplot,
+    ComplexHeatmap,
+    circlize,
     ggplot2,
+    grDevices,
     graphics,
+    grid,
     methods,
     tools
 Suggests:

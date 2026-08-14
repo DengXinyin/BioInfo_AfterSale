@@ -19,6 +19,7 @@ choose_plot_style(
   data_label = list(),
   facet_label = list(),
   legend = list(),
+  panel = list(),
   group_palette = NULL
 )
 }
@@ -36,14 +37,19 @@ choose_plot_style(
 \item{title, subtitle, axis_title, axis_text, legend_title, legend_text, data_label, facet_label}{Named lists overriding \code{font_family}, \code{size}, \code{bold}, \code{italic}, \code{align},
 or \code{show} for each semantic text element.}
 
-\item{legend}{Named list overriding \code{show}, \code{position}, or \code{frame}.}
+\item{legend}{Named list overriding \code{show}, \code{position}, \code{frame}, \code{box}, or
+\code{box_just}.}
+
+\item{panel}{Named list controlling \code{border}, \code{border_color},
+\code{border_width}, \code{major_grid}, \code{minor_grid}, their colors, and their line
+widths.}
 
 \item{group_palette}{Character vector of group colors. \code{NULL} uses the
 package's default 12-color palette.}
 }
 \value{
 A \code{bioinfo_plot_style} list containing \code{global}, \code{text}, \code{legend},
-\code{group_palette}, and the generated \code{ggplot_theme}.
+\code{panel}, \code{group_palette}, and the generated \code{ggplot_theme}.
 }
 \description{
 Creates a reusable visualization-style object modelled on the common style

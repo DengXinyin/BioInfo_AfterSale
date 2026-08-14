@@ -27,11 +27,20 @@
 #' @param legend_text_size Optional legend text size.
 #' @param legend_position A ggplot2 legend position.
 #' @param label_format Maximum label width used by enrichplot.
-#' @param x_label,color_label,size_label Optional legend and axis labels for
-#'   data-frame plots.
+#' @param x_label,y_label Optional axis labels. Labels can be character values
+#'   or plotmath expressions such as `expression(-log[10](Pvalue))`.
+#' @param color_label,size_label Optional legend labels for data-frame plots.
 #' @param color_palette Continuous colors used for data-frame plots.
 #' @param size_breaks Optional numeric Count legend breaks for data-frame dot
-#'   plots.
+#'   plots. `NULL` uses ggplot2 automatic breaks.
+#' @param size_range Two positive numbers defining the minimum and maximum
+#'   point sizes.
+#' @param point_alpha Point opacity from 0 to 1.
+#' @param x_limits,x_breaks Optional numeric X-axis limits and breaks.
+#' @param x_expand Optional numeric expansion passed to
+#'   [ggplot2::scale_x_continuous()].
+#' @param legend_order Character vector defining guide order. Supported values
+#'   are `"color"` and `"size"`.
 #' @param style Optional object returned by [choose_plot_style()]. When
 #'   supplied, it replaces the individual legacy font and legend arguments.
 #' @param output_file Optional output filename. When supplied, the function
@@ -67,10 +76,17 @@ GO_KEGG_plot <- function(
     legend_position = "right",
     label_format = 40,
     x_label = NULL,
+    y_label = NULL,
     color_label = NULL,
     size_label = NULL,
     color_palette = c("#2166AC", "#00BFC4", "#7AD151", "#FDE725", "#D73027"),
     size_breaks = NULL,
+    size_range = c(4, 12),
+    point_alpha = 0.9,
+    x_limits = NULL,
+    x_breaks = NULL,
+    x_expand = NULL,
+    legend_order = c("color", "size"),
     style = NULL,
     output_file = NULL,
     figure_width = NULL,
@@ -85,8 +101,39 @@ GO_KEGG_plot <- function(
   if (!is.null(filter_by)) filter_by <- match.arg(filter_by)
   if (color_was_missing && is.null(filter_by)) color <- x
   .assert_probability(cutoff, "cutoff")
+  .assert_probability(point_alpha, "point_alpha")
   .assert_positive_number(show_category, "show_category")
   .assert_positive_number(base_size, "base_size")
+  .assert_numeric_vector(size_range, "size_range", length_required = 2L, positive = TRUE)
+  if (size_range[[1]] > size_range[[2]]) {
+    stop("`size_range` must be ordered from minimum to maximum.", call. = FALSE)
+  }
+  if (!is.null(size_breaks)) {
+    .assert_numeric_vector(size_breaks, "size_breaks", positive = TRUE)
+  }
+  if (!is.null(x_limits)) {
+    .assert_numeric_vector(x_limits, "x_limits", length_required = 2L)
+    if (x_limits[[1]] >= x_limits[[2]]) {
+      stop("`x_limits` must be ordered from minimum to maximum.", call. = FALSE)
+    }
+  }
+  if (!is.null(x_breaks)) .assert_numeric_vector(x_breaks, "x_breaks")
+  if (!is.null(x_expand)) .assert_numeric_vector(x_expand, "x_expand")
+  if (!is.character(legend_order) || !length(legend_order) ||
+      anyNA(legend_order) || anyDuplicated(legend_order) ||
+      any(!legend_order %in% c("color", "size"))) {
+    stop(
+      "`legend_order` must contain unique values selected from 'color' and 'size'.",
+      call. = FALSE
+    )
+  }
+  guide_order <- stats::setNames(seq_along(legend_order), legend_order)
+  color_guide_order <- if ("color" %in% names(guide_order)) {
+    unname(guide_order[["color"]])
+  } else 0
+  size_guide_order <- if ("size" %in% names(guide_order)) {
+    unname(guide_order[["size"]])
+  } else 0
   if (is.null(style)) {
     style <- choose_plot_style(
       font_family = font_family,
@@ -171,24 +218,39 @@ GO_KEGG_plot <- function(
     if (is.null(size_label)) size_label <- size
 
     if (plot_type == "dotplot") {
+      size_scale_args <- list(name = size_label, range = size_range)
+      if (!is.null(size_breaks)) size_scale_args$breaks <- size_breaks
       plot <- ggplot2::ggplot(
         table,
         ggplot2::aes(x = .XValue, y = .Label, color = .ColorValue, size = .SizeValue)
       ) +
-        ggplot2::geom_point(alpha = 0.9) +
-        ggplot2::scale_size_continuous(
-          name = size_label, range = c(4, 12), breaks = size_breaks
+        ggplot2::geom_point(alpha = point_alpha) +
+        do.call(ggplot2::scale_size_continuous, size_scale_args) +
+        ggplot2::scale_color_gradientn(colors = color_palette, name = color_label) +
+        ggplot2::guides(
+          color = ggplot2::guide_colorbar(order = color_guide_order),
+          size = ggplot2::guide_legend(order = size_guide_order)
         )
     } else {
       plot <- ggplot2::ggplot(
         table, ggplot2::aes(x = .XValue, y = .Label, fill = .ColorValue)
-      ) + ggplot2::geom_col(width = 0.75)
+      ) +
+        ggplot2::geom_col(width = 0.75) +
+        ggplot2::scale_fill_gradientn(colors = color_palette, name = color_label) +
+        ggplot2::guides(
+          fill = ggplot2::guide_colorbar(order = color_guide_order)
+        )
     }
     plot <- plot +
-      ggplot2::scale_color_gradientn(colors = color_palette, name = color_label) +
-      ggplot2::scale_fill_gradientn(colors = color_palette, name = color_label) +
-      ggplot2::labs(x = x_label, y = NULL, title = title) +
+      ggplot2::labs(x = x_label, y = y_label, title = title) +
       style$ggplot_theme
+    x_scale_args <- list()
+    if (!is.null(x_limits)) x_scale_args$limits <- x_limits
+    if (!is.null(x_breaks)) x_scale_args$breaks <- x_breaks
+    if (!is.null(x_expand)) x_scale_args$expand <- x_expand
+    if (length(x_scale_args)) {
+      plot <- plot + do.call(ggplot2::scale_x_continuous, x_scale_args)
+    }
     return(.finish_enrichment_plot(
       plot, style, output_file, figure_width, figure_height, dpi, device
     ))
@@ -217,6 +279,15 @@ GO_KEGG_plot <- function(
   }
 
   plot <- plot + ggplot2::labs(title = title) + style$ggplot_theme
+  if (!is.null(x_label)) plot <- plot + ggplot2::labs(x = x_label)
+  if (!is.null(y_label)) plot <- plot + ggplot2::labs(y = y_label)
+  x_scale_args <- list()
+  if (!is.null(x_limits)) x_scale_args$limits <- x_limits
+  if (!is.null(x_breaks)) x_scale_args$breaks <- x_breaks
+  if (!is.null(x_expand)) x_scale_args$expand <- x_expand
+  if (length(x_scale_args)) {
+    plot <- plot + do.call(ggplot2::scale_x_continuous, x_scale_args)
+  }
   .finish_enrichment_plot(
     plot, style, output_file, figure_width, figure_height, dpi, device
   )

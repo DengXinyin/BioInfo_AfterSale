@@ -10,6 +10,7 @@
 - `GO_KEGG_plot()`：只对已有的 `enrichResult`/`gseaResult` 绘图；
 - `GO_KEGG()`：统一入口，自动串联前两个函数。
 - `choose_plot_style()`：创建可供所有 ggplot2 图形复用的统一样式。
+- `Heatmap_plot()`：使用 ComplexHeatmap 绘制带 Z-score 和分组图例的热图。
 
 ## 安装
 
@@ -65,7 +66,19 @@ style <- choose_plot_style(
   legend_title = list(size = 18),
   legend_text = list(size = 15),
   facet_label = list(size = 17, bold = TRUE),
-  legend = list(show = TRUE, position = "bottom", frame = FALSE)
+  legend = list(
+    show = TRUE, position = "right", frame = FALSE,
+    box = "vertical", box_just = "center"
+  ),
+  panel = list(
+    border = TRUE,
+    border_color = "black",
+    border_width = 0.8,
+    major_grid = TRUE,
+    minor_grid = TRUE,
+    major_grid_color = "#BDBDBD",
+    minor_grid_color = "#E1E1E1"
+  )
 )
 
 p <- GO_KEGG_plot(
@@ -84,7 +97,19 @@ p <- GO_KEGG_plot(
   filter_by = NULL,
   x = "pvalue",
   x_transform = "neg_log10",
+  x_label = expression(-log[10](Pvalue)),
+  y_label = NULL,
+  x_limits = c(1, 6),
+  x_breaks = 1:6,
+  x_expand = c(0.02, 0),
   color = "RichFactor",
+  color_label = "Rich Factor",
+  size = "Count",
+  size_label = "Count",
+  size_breaks = c(4, 7, 10),
+  size_range = c(4, 12),
+  point_alpha = 0.9,
+  legend_order = c("color", "size"),
   output_file = "GO_enrichment.pdf",
   figure_width = 15,
   figure_height = 7,
@@ -117,6 +142,36 @@ p <- GO_KEGG_plot(
 `pvalue_cutoff` 是富集计算阶段传给 `clusterProfiler` 的参数；`filter_by` 和
 `cutoff` 是绘图前采用的筛选口径。因此可明确实现“按照原始 P 值而不是校正后
 P 值筛选和绘图”。
+
+## ComplexHeatmap 热图
+
+```r
+heatmap <- Heatmap_plot(
+  expression_matrix,
+  group = c(C1 = "Control", C2 = "Control", T1 = "Treatment", T2 = "Treatment"),
+  group_colors = c(Control = "#7F8C8D", Treatment = "#8D6E63"),
+  scale = "row",
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  row_names_italic = TRUE,
+  column_names_rot = 45,
+  title = "Selected genes",
+  title_position = "top",
+  title_font_family = "Times New Roman",
+  title_font_size = 18,
+  title_font_face = "bold",
+  legend_side = "right",
+  output_file = "selected_genes_heatmap.pdf",
+  figure_width = 8,
+  figure_height = 7
+)
+```
+
+默认把 Z-score 和 Group 图例放在主图右侧，Z-score 在上、Group 在下；
+`column_names_rot = 0` 为水平，`90` 为竖直，也可传入任意角度。基因行名默认
+使用斜体。`show_zscore_legend` 和 `show_group_legend` 可分别控制两类图例。
 
 ## 使用本地 KEGG 数据
 
@@ -167,5 +222,5 @@ p + ggplot2::theme(legend.position = "bottom")
 
 ## 当前范围
 
-版本 `0.1.0` 先覆盖 GO/KEGG ORA 的计算，以及 `dotplot` 和 `barplot`。指定
+版本 `0.2.0` 先覆盖 GO/KEGG ORA 的计算，以及 `dotplot` 和 `barplot`。指定
 通路单独标红、GO 三分面、圈图、结果 Excel 导出等需求将在后续版本逐步加入。

@@ -1,4 +1,3 @@
-export(enrichment_plot)
-export(plot_enrichment)
-export(run_enrichment)
-S3method(print,bioinfo_enrichment)
+export(GO_KEGG)
+export(GO_KEGG_analyse)
+export(GO_KEGG_plot)

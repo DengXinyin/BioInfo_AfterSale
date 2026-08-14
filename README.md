@@ -6,9 +6,9 @@
 
 ## 三个函数
 
-- `run_enrichment()`：只做 GO 或 KEGG 富集分析；
-- `plot_enrichment()`：只对已有的 `enrichResult`/`gseaResult` 绘图；
-- `enrichment_plot()`：统一入口，自动串联前两个函数。
+- `GO_KEGG_analyse()`：只做 GO 或 KEGG 富集分析；
+- `GO_KEGG_plot()`：只对已有的 `enrichResult`/`gseaResult` 绘图；
+- `GO_KEGG()`：统一入口，自动串联前两个函数。
 
 ## 安装
 
@@ -25,7 +25,7 @@ Docker 镜像中应提前安装 `clusterProfiler`、`enrichplot`、`ggplot2`，�
 ```r
 library(BioInfoAfterSale)
 
-go <- enrichment_plot(
+go <- GO_KEGG(
   gene = gene_ids,
   analysis = "GO",
   run_args = list(
@@ -58,7 +58,7 @@ P 值筛选和绘图”。
 离线 Docker 环境推荐提供固定版本的 `TERM2GENE` 和 `TERM2NAME`：
 
 ```r
-kegg <- enrichment_plot(
+kegg <- GO_KEGG(
   gene = entrez_ids,
   analysis = "KEGG",
   run_args = list(
@@ -81,7 +81,7 @@ kegg <- enrichment_plot(
 ## 已有富集结果时只重绘
 
 ```r
-redrawn <- enrichment_plot(
+redrawn <- GO_KEGG(
   result = existing_enrich_result,
   plot_args = list(
     plot_type = "dotplot",
@@ -93,10 +93,10 @@ redrawn <- enrichment_plot(
 )
 ```
 
-`plot_enrichment()` 返回普通 ggplot 对象，仍可继续追加 `theme()`：
+`GO_KEGG_plot()` 返回普通 ggplot 对象，仍可继续追加 `theme()`：
 
 ```r
-p <- plot_enrichment(existing_enrich_result, filter_by = "pvalue")
+p <- GO_KEGG_plot(existing_enrich_result, filter_by = "pvalue")
 p + ggplot2::theme(legend.position = "bottom")
 ```
 

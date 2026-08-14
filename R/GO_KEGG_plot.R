@@ -27,7 +27,7 @@
 #'
 #' @return A ggplot object.
 #' @export
-plot_enrichment <- function(
+GO_KEGG_plot <- function(
     result,
     plot_type = c("dotplot", "barplot"),
     filter_by = c("p.adjust", "pvalue"),

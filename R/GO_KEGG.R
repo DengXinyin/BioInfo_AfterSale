@@ -7,18 +7,20 @@
 #' @param gene Optional character vector of gene IDs.
 #' @param result Optional existing enrichment result object.
 #' @param analysis Either `"GO"` or `"KEGG"`; used when `gene` is supplied.
-#' @param run_args Named list passed to [run_enrichment()].
-#' @param plot_args Named list passed to [plot_enrichment()].
+#' @param run_args Named list passed to [GO_KEGG_analyse()].
+#' @param plot_args Named list passed to [GO_KEGG_plot()].
+#' @param verbose Whether to print a short completion summary.
 #'
-#' @return An object of class `bioinfo_enrichment` containing `result`,
-#'   `table`, `plot`, and `call`.
+#' @return Invisibly returns a list containing `result`, `table`, `plot`, and
+#'   `call`.
 #' @export
-enrichment_plot <- function(
+GO_KEGG <- function(
     gene = NULL,
     result = NULL,
     analysis = c("GO", "KEGG"),
     run_args = list(),
-    plot_args = list()) {
+    plot_args = list(),
+    verbose = TRUE) {
 
   has_gene <- !is.null(gene)
   has_result <- !is.null(result)
@@ -35,7 +37,7 @@ enrichment_plot <- function(
       stop("Do not include `gene` or `analysis` inside `run_args`.", call. = FALSE)
     }
     result <- do.call(
-      run_enrichment,
+      GO_KEGG_analyse,
       c(list(gene = gene, analysis = analysis), run_args)
     )
   }
@@ -43,13 +45,17 @@ enrichment_plot <- function(
   if ("result" %in% names(plot_args)) {
     stop("Do not include `result` inside `plot_args`.", call. = FALSE)
   }
-  plot <- do.call(plot_enrichment, c(list(result = result), plot_args))
+  plot <- do.call(GO_KEGG_plot, c(list(result = result), plot_args))
   output <- list(
     result = result,
     table = .normalise_result_table(result),
     plot = plot,
     call = match.call()
   )
-  class(output) <- c("bioinfo_enrichment", "list")
-  output
+  if (isTRUE(verbose)) {
+    cat("GO_KEGG completed\n")
+    cat("  Terms:", nrow(output$table), "\n")
+    cat("  Components: result, table, plot, call\n")
+  }
+  invisible(output)
 }

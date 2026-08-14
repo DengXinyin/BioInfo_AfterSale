@@ -1,15 +1,15 @@
 test_that("unified interface requires exactly one input", {
-  expect_error(enrichment_plot(), "exactly one")
+  expect_error(GO_KEGG(), "exactly one")
   expect_error(
-    enrichment_plot(gene = "1", result = data.frame()),
+    GO_KEGG(gene = "1", result = data.frame()),
     "exactly one"
   )
 })
 
-test_that("run_enrichment validates genes before loading annotation", {
-  expect_error(run_enrichment(character(), analysis = "GO"), "no usable")
+test_that("GO_KEGG_analyse validates genes before loading annotation", {
+  expect_error(GO_KEGG_analyse(character(), analysis = "GO"), "no usable")
 })
 
-test_that("plot_enrichment validates the result type", {
-  expect_error(plot_enrichment(data.frame()), "enrichResult")
+test_that("GO_KEGG_plot validates the result type", {
+  expect_error(GO_KEGG_plot(data.frame()), "enrichResult")
 })

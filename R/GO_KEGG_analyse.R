@@ -31,7 +31,7 @@
 #'
 #' @return An `enrichResult` object.
 #' @export
-run_enrichment <- function(
+GO_KEGG_analyse <- function(
     gene,
     analysis = c("GO", "KEGG"),
     universe = NULL,

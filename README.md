@@ -79,6 +79,22 @@ p <- GO_KEGG_plot(
 样式对象还保存了 `dpi`、默认画布宽高和 `group_palette`，后续其他售后绘图
 函数可以直接复用同一套接口。
 
+普通富集结果表也可以直接绘图。例如横轴使用 `-log10(pvalue)`、颜色使用
+Rich Factor：
+
+```r
+p <- GO_KEGG_plot(
+  selected_pathways,
+  filter_by = NULL,
+  x = "pvalue",
+  x_transform = "neg_log10",
+  color = "RichFactor",
+  label = "Description",
+  size = "Count",
+  style = style
+)
+```
+
 `pvalue_cutoff` 是富集计算阶段传给 `clusterProfiler` 的参数；`filter_by` 和
 `cutoff` 是绘图前采用的筛选口径。因此可明确实现“按照原始 P 值而不是校正后
 P 值筛选和绘图”。

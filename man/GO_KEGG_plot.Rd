@@ -11,7 +11,10 @@ GO_KEGG_plot(
   cutoff = 0.05,
   show_category = 20,
   x = "GeneRatio",
+  x_transform = c("identity", "neg_log10"),
   color = filter_by,
+  label = "Description",
+  size = "Count",
   order_by = x,
   decreasing = TRUE,
   title = NULL,
@@ -22,25 +25,37 @@ GO_KEGG_plot(
   legend_text_size = max(base_size - 2, 1),
   legend_position = "right",
   label_format = 40,
+  x_label = NULL,
+  color_label = NULL,
+  size_label = NULL,
+  color_palette = c("#2166AC", "#00BFC4", "#7AD151", "#FDE725", "#D73027"),
   style = NULL,
   ...
 )
 }
 \arguments{
-\item{result}{An \code{enrichResult} or \code{gseaResult} object.}
+\item{result}{An \code{enrichResult}, \code{gseaResult}, or standardized data frame.}
 
 \item{plot_type}{Either \code{"dotplot"} or \code{"barplot"}.}
 
-\item{filter_by}{Column used to filter terms: \code{"p.adjust"} or \code{"pvalue"}.}
+\item{filter_by}{Column used to filter terms: \code{"p.adjust"}, \code{"pvalue"}, or
+\code{NULL} to keep every supplied row.}
 
 \item{cutoff}{Maximum value retained from \code{filter_by}.}
 
 \item{show_category}{Maximum number of categories displayed.}
 
 \item{x}{X variable accepted by \code{\link[enrichplot:dotplot]{enrichplot::dotplot()}}, normally
-\code{"GeneRatio"} or \code{"Count"}. Ignored for bar plots.}
+\code{"GeneRatio"} or \code{"Count"}. For data frames, any numeric column.}
+
+\item{x_transform}{X-axis transformation for data frames: \code{"identity"} or
+\code{"neg_log10"}.}
 
 \item{color}{Color variable passed to enrichplot.}
+
+\item{label}{Label column used for data-frame plots.}
+
+\item{size}{Point-size column used for data-frame dot plots.}
 
 \item{order_by}{Ordering variable passed to enrichplot.}
 
@@ -62,6 +77,11 @@ GO_KEGG_plot(
 
 \item{label_format}{Maximum label width used by enrichplot.}
 
+\item{x_label, color_label, size_label}{Optional legend and axis labels for
+data-frame plots.}
+
+\item{color_palette}{Continuous colors used for data-frame plots.}
+
 \item{style}{Optional object returned by \code{\link[=choose_plot_style]{choose_plot_style()}}. When
 supplied, it replaces the individual legacy font and legend arguments.}
 
@@ -71,8 +91,7 @@ supplied, it replaces the individual legacy font and legend arguments.}
 A ggplot object.
 }
 \description{
-Filters an enrichment result and creates a dot plot or bar plot with
-\code{enrichplot}. Common font, title, legend, and axis-text settings are exposed
-for routine after-sales figure changes. The returned object is a regular
-ggplot and can be modified further with ggplot2.
+Filters an enrichment result and creates a dot plot or bar plot. Native
+\code{enrichResult} objects use \code{enrichplot}; standardized data frames use a
+flexible ggplot2 path that supports arbitrary numeric axes and colors.
 }

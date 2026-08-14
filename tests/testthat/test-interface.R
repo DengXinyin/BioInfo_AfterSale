@@ -10,8 +10,30 @@ test_that("GO_KEGG_analyse validates genes before loading annotation", {
   expect_error(GO_KEGG_analyse(character(), analysis = "GO"), "no usable")
 })
 
-test_that("GO_KEGG_plot validates the result type", {
-  expect_error(GO_KEGG_plot(data.frame()), "enrichResult")
+test_that("GO_KEGG_plot validates a data-frame result", {
+  expect_error(GO_KEGG_plot(data.frame()), "missing column")
+  expect_error(GO_KEGG_plot(1), "enrichResult")
+})
+
+test_that("GO_KEGG_plot supports custom table mappings", {
+  table <- data.frame(
+    Description = c("Pathway A", "Pathway B"),
+    pvalue = c(0.001, 0.02),
+    RichFactor = c(2.5, 4.2),
+    Count = c(5, 9)
+  )
+  style <- choose_plot_style(font_family = "sans")
+  plot <- GO_KEGG_plot(
+    table,
+    filter_by = NULL,
+    x = "pvalue",
+    x_transform = "neg_log10",
+    color = "RichFactor",
+    style = style
+  )
+  expect_s3_class(plot, "ggplot")
+  expect_equal(nrow(plot$data), 2)
+  expect_equal(sort(plot$data$.XValue), sort(-log10(table$pvalue)))
 })
 
 test_that("choose_plot_style creates and validates a shared style", {

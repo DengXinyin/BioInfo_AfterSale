@@ -173,6 +173,8 @@ heatmap <- Heatmap_plot(
 `column_names_rot = 0` 为水平，`90` 为竖直，也可传入任意角度。基因行名默认
 使用斜体。`show_zscore_legend` 和 `show_group_legend` 可分别控制两类图例。
 
+完整示例见[使用 `Heatmap_plot()` 绘制带样本分组的表达热图](docs/heatmap-tutorial.md)。
+
 ## 使用本地 KEGG 数据
 
 离线 Docker 环境推荐提供固定版本的 `TERM2GENE` 和 `TERM2NAME`：

@@ -20,6 +20,7 @@ Imports:
     ComplexHeatmap,
     circlize,
     ggplot2,
+    ggtext,
     grDevices,
     graphics,
     grid,

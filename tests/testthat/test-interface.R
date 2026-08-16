@@ -34,7 +34,7 @@ test_that("GO_KEGG_plot supports custom table mappings", {
   expect_s3_class(plot, "ggplot")
   expect_equal(nrow(plot$data), 2)
   expect_equal(sort(plot$data$.XValue), sort(-log10(table$pvalue)))
-  expect_s3_class(plot$scales$get_scales("size")$breaks, "waiver")
+  expect_equal(plot$scales$get_scales("size")$breaks, c(5, 9))
 })
 
 test_that("GO_KEGG_plot exposes after-sales axis, point, and guide controls", {
@@ -72,6 +72,118 @@ test_that("GO_KEGG_plot exposes after-sales axis, point, and guide controls", {
   expect_equal(x_scale$expand, c(0, 0))
   expect_error(GO_KEGG_plot(table, size_range = c(8, 2)), "minimum")
   expect_error(GO_KEGG_plot(table, legend_order = c("size", "size")), "unique")
+})
+
+test_that("GO_KEGG_plot defaults to at most three Gene count breaks", {
+  table <- data.frame(
+    Description = paste("Pathway", LETTERS[1:6]),
+    pvalue = c(0.001, 0.002, 0.004, 0.008, 0.016, 0.032),
+    RichFactor = c(0.20, 0.25, 0.30, 0.35, 0.40, 0.45),
+    Count = c(5, 7, 9, 11, 13, 15)
+  )
+  plot <- GO_KEGG_plot(
+    table,
+    filter_by = NULL,
+    x = "pvalue",
+    x_transform = "neg_log10",
+    color = "RichFactor",
+    font_family = "sans"
+  )
+  expect_equal(plot$scales$get_scales("size")$breaks, c(5, 9, 15))
+})
+
+test_that("GO_KEGG_plot highlights selected term labels", {
+  table <- data.frame(
+    Description = c("DNA repair", "Cell cycle", "RNA processing"),
+    pvalue = c(0.001, 0.01, 0.02),
+    RichFactor = c(0.42, 0.35, 0.28),
+    Count = c(12, 9, 6)
+  )
+  plot <- GO_KEGG_plot(
+    table,
+    filter_by = NULL,
+    x = "RichFactor",
+    color = "pvalue",
+    highlight_terms = c("DNA repair", "RNA processing"),
+    highlight_color = "#7B2CBF",
+    highlight_bold = TRUE,
+    font_family = "sans"
+  )
+  labels <- as.character(plot$data$.Label)
+  expect_true(any(grepl("DNA repair", labels, fixed = TRUE)))
+  expect_true(any(grepl("RNA processing", labels, fixed = TRUE)))
+  expect_equal(sum(grepl("font-weight:bold", labels, fixed = TRUE)), 2)
+  expect_equal(sum(grepl("color:#7B2CBF", labels, fixed = TRUE)), 2)
+  expect_s3_class(plot$theme$axis.text.y, "element_markdown")
+  expect_warning(
+    GO_KEGG_plot(
+      table,
+      filter_by = NULL,
+      x = "RichFactor",
+      color = "pvalue",
+      highlight_terms = "Missing pathway",
+      font_family = "sans"
+    ),
+    "not displayed"
+  )
+  expect_error(
+    GO_KEGG_plot(
+      table,
+      filter_by = NULL,
+      x = "RichFactor",
+      color = "pvalue",
+      highlight_terms = "DNA repair",
+      highlight_color = "not-a-color"
+    ),
+    "valid R color"
+  )
+})
+
+test_that("GO_KEGG_plot applies count breaks and highlights to enrichResult", {
+  result_table <- data.frame(
+    ID = paste0("GO:", 1:4),
+    Description = c("DNA repair", "Cell cycle", "RNA processing", "Oxidative stress"),
+    GeneRatio = c("5/20", "4/20", "3/20", "2/20"),
+    BgRatio = rep("10/100", 4),
+    RichFactor = c(0.50, 0.40, 0.30, 0.20),
+    FoldEnrichment = c(2.5, 2.0, 1.5, 1.0),
+    zScore = rep(1, 4),
+    pvalue = c(0.001, 0.005, 0.010, 0.020),
+    p.adjust = c(0.004, 0.010, 0.020, 0.030),
+    qvalue = c(0.004, 0.010, 0.020, 0.030),
+    geneID = c("1/2/3/4/5", "1/2/3/4", "1/2/3", "1/2"),
+    Count = c(5, 4, 3, 2),
+    stringsAsFactors = FALSE
+  )
+  enrichment <- methods::new(
+    "enrichResult",
+    result = result_table,
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "BH",
+    qvalueCutoff = 0.2,
+    organism = "human",
+    ontology = "BP",
+    gene = as.character(1:5),
+    keytype = "ENTREZID",
+    universe = as.character(1:100),
+    geneSets = list(),
+    readable = FALSE
+  )
+  plot <- GO_KEGG_plot(
+    enrichment,
+    filter_by = NULL,
+    show_category = 4,
+    font_family = "sans",
+    highlight_terms = "DNA repair",
+    highlight_color = "#7B2CBF"
+  )
+  expect_equal(plot$scales$get_scales("size")$breaks, c(2, 3, 5))
+  expect_s3_class(plot$theme$axis.text.y, "element_markdown")
+  y_scale <- plot$scales$get_scales("y")
+  formatted <- y_scale$labels(c("DNA repair", "Cell cycle"))
+  expect_match(formatted[[1]], "font-weight:bold")
+  expect_match(formatted[[1]], "color:#7B2CBF")
+  expect_identical(formatted[[2]], "Cell cycle")
 })
 
 test_that("GO_KEGG_plot saves selectable inch dimensions", {

@@ -54,6 +54,19 @@
   value
 }
 
+.default_size_breaks <- function(values, n = 3L) {
+  values <- sort(unique(values[is.finite(values)]))
+  if (length(values) <= n) return(values)
+  positions <- unique(floor(seq(1, length(values), length.out = n)))
+  values[positions]
+}
+
+.escape_html <- function(values) {
+  values <- gsub("&", "&amp;", values, fixed = TRUE)
+  values <- gsub("<", "&lt;", values, fixed = TRUE)
+  gsub(">", "&gt;", values, fixed = TRUE)
+}
+
 .clean_gene_ids <- function(gene, argument = "gene") {
   if (is.factor(gene)) gene <- as.character(gene)
   if (!is.atomic(gene)) {

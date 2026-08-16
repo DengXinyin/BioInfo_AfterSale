@@ -32,10 +32,14 @@
 #' @param color_label,size_label Optional legend labels for data-frame plots.
 #' @param color_palette Continuous colors used for data-frame plots.
 #' @param size_breaks Optional numeric Count legend breaks for data-frame dot
-#'   plots. `NULL` uses ggplot2 automatic breaks.
+#'   plots. `NULL` selects up to three representative observed values.
 #' @param size_range Two positive numbers defining the minimum and maximum
 #'   point sizes.
 #' @param point_alpha Point opacity from 0 to 1.
+#' @param highlight_terms Optional character vector of pathway or term names to
+#'   emphasize on the Y axis. Values are matched exactly against `label`.
+#' @param highlight_color Color used for highlighted term labels.
+#' @param highlight_bold Whether highlighted term labels are bold.
 #' @param x_limits,x_breaks Optional numeric X-axis limits and breaks.
 #' @param x_expand Optional numeric expansion passed to
 #'   [ggplot2::scale_x_continuous()].
@@ -83,6 +87,9 @@ GO_KEGG_plot <- function(
     size_breaks = NULL,
     size_range = c(4, 12),
     point_alpha = 0.9,
+    highlight_terms = NULL,
+    highlight_color = "#D73027",
+    highlight_bold = TRUE,
     x_limits = NULL,
     x_breaks = NULL,
     x_expand = NULL,
@@ -99,9 +106,12 @@ GO_KEGG_plot <- function(
   plot_type <- match.arg(plot_type)
   x_transform <- match.arg(x_transform)
   if (!is.null(filter_by)) filter_by <- match.arg(filter_by)
-  if (color_was_missing && is.null(filter_by)) color <- x
+  if (color_was_missing && is.null(filter_by)) {
+    color <- if (is.data.frame(result)) x else "p.adjust"
+  }
   .assert_probability(cutoff, "cutoff")
   .assert_probability(point_alpha, "point_alpha")
+  .assert_flag(highlight_bold, "highlight_bold")
   .assert_positive_number(show_category, "show_category")
   .assert_positive_number(base_size, "base_size")
   .assert_numeric_vector(size_range, "size_range", length_required = 2L, positive = TRUE)
@@ -111,6 +121,28 @@ GO_KEGG_plot <- function(
   if (!is.null(size_breaks)) {
     .assert_numeric_vector(size_breaks, "size_breaks", positive = TRUE)
   }
+  if (!is.null(highlight_terms)) {
+    if (!is.character(highlight_terms) || anyNA(highlight_terms) ||
+        any(!nzchar(highlight_terms))) {
+      stop("`highlight_terms` must be NULL or a non-empty character vector.", call. = FALSE)
+    }
+    highlight_terms <- unique(highlight_terms)
+  }
+  if (!is.character(highlight_color) || length(highlight_color) != 1L ||
+      is.na(highlight_color) || !nzchar(highlight_color)) {
+    stop("`highlight_color` must be one non-empty color value.", call. = FALSE)
+  }
+  highlight_rgb <- tryCatch(
+    grDevices::col2rgb(highlight_color),
+    error = function(error) NULL
+  )
+  if (is.null(highlight_rgb)) {
+    stop("`highlight_color` must be a valid R color.", call. = FALSE)
+  }
+  highlight_color <- grDevices::rgb(
+    highlight_rgb[1, 1], highlight_rgb[2, 1], highlight_rgb[3, 1],
+    maxColorValue = 255
+  )
   if (!is.null(x_limits)) {
     .assert_numeric_vector(x_limits, "x_limits", length_required = 2L)
     if (x_limits[[1]] >= x_limits[[2]]) {
@@ -189,7 +221,8 @@ GO_KEGG_plot <- function(
     size_values <- size_values[keep]
     if (!nrow(table)) stop("Plot mappings contain no finite numeric values.", call. = FALSE)
 
-    labels <- vapply(as.character(table[[label]]), function(value) {
+    term_names <- as.character(table[[label]])
+    labels <- vapply(term_names, function(value) {
       paste(strwrap(value, width = label_format), collapse = "\n")
     }, character(1))
     order_values <- if (identical(order_by, x)) {
@@ -205,7 +238,33 @@ GO_KEGG_plot <- function(
     table$.XValue <- x_values[ordering]
     table$.ColorValue <- color_values[ordering]
     table$.SizeValue <- size_values[ordering]
-    table$.Label <- factor(labels[ordering], levels = rev(unique(labels[ordering])))
+    display_labels <- labels[ordering]
+    displayed_terms <- term_names[ordering]
+    use_highlight_labels <- !is.null(highlight_terms)
+    if (use_highlight_labels) {
+      highlighted <- displayed_terms %in% highlight_terms
+      missing_highlights <- setdiff(highlight_terms, displayed_terms)
+      if (length(missing_highlights)) {
+        warning(
+          "Highlighted term(s) are not displayed: ",
+          paste(missing_highlights, collapse = ", "), call. = FALSE
+        )
+      }
+      display_labels <- gsub(
+        "\n", "<br>", .escape_html(display_labels), fixed = TRUE
+      )
+      emphasis <- paste0(
+        "color:", highlight_color, ";",
+        if (highlight_bold) "font-weight:bold;" else ""
+      )
+      display_labels[highlighted] <- paste0(
+        "<span style=\"", emphasis, "\">",
+        display_labels[highlighted], "</span>"
+      )
+    }
+    table$.Label <- factor(
+      display_labels, levels = rev(unique(display_labels))
+    )
 
     if (is.null(x_label)) {
       x_label <- if (x_transform == "neg_log10") {
@@ -219,7 +278,11 @@ GO_KEGG_plot <- function(
 
     if (plot_type == "dotplot") {
       size_scale_args <- list(name = size_label, range = size_range)
-      if (!is.null(size_breaks)) size_scale_args$breaks <- size_breaks
+      size_scale_args$breaks <- if (is.null(size_breaks)) {
+        .default_size_breaks(table$.SizeValue, n = 3L)
+      } else {
+        size_breaks
+      }
       plot <- ggplot2::ggplot(
         table,
         ggplot2::aes(x = .XValue, y = .Label, color = .ColorValue, size = .SizeValue)
@@ -244,6 +307,23 @@ GO_KEGG_plot <- function(
     plot <- plot +
       ggplot2::labs(x = x_label, y = y_label, title = title) +
       style$ggplot_theme
+    if (use_highlight_labels && style$text$axis_text$show) {
+      axis_text_style <- style$text$axis_text
+      axis_text_family <- if (nzchar(axis_text_style$font_family)) {
+        axis_text_style$font_family
+      } else {
+        style$global$font_family
+      }
+      plot <- plot + ggplot2::theme(
+        axis.text.y = ggtext::element_markdown(
+          family = axis_text_family,
+          size = axis_text_style$size,
+          face = .text_face(axis_text_style),
+          hjust = c(left = 0, center = 0.5, right = 1)[[axis_text_style$align]],
+          color = "black"
+        )
+      )
+    }
     x_scale_args <- list()
     if (!is.null(x_limits)) x_scale_args$limits <- x_limits
     if (!is.null(x_breaks)) x_scale_args$breaks <- x_breaks
@@ -272,6 +352,25 @@ GO_KEGG_plot <- function(
       orderBy = order_by, decreasing = decreasing,
       label_format = label_format, ...
     )
+    native_size_values <- if (size %in% names(plot$data)) {
+      suppressWarnings(as.numeric(plot$data[[size]]))
+    } else {
+      numeric()
+    }
+    native_size_breaks <- if (is.null(size_breaks)) {
+      .default_size_breaks(native_size_values, n = 3L)
+    } else {
+      size_breaks
+    }
+    if (length(native_size_breaks)) {
+      plot <- suppressMessages(
+        plot + ggplot2::scale_size_continuous(
+          name = size_label %||% size,
+          range = size_range,
+          breaks = native_size_breaks
+        )
+      )
+    }
   } else {
     plot <- graphics::barplot(
       filtered, color = color, showCategory = show_category, ...
@@ -279,6 +378,56 @@ GO_KEGG_plot <- function(
   }
 
   plot <- plot + ggplot2::labs(title = title) + style$ggplot_theme
+  if (!is.null(highlight_terms) && plot_type == "dotplot") {
+    displayed_terms <- if ("Description" %in% names(plot$data)) {
+      unique(as.character(plot$data$Description))
+    } else {
+      character()
+    }
+    missing_highlights <- setdiff(highlight_terms, displayed_terms)
+    if (length(missing_highlights)) {
+      warning(
+        "Highlighted term(s) are not displayed: ",
+        paste(missing_highlights, collapse = ", "), call. = FALSE
+      )
+    }
+    label_formatter <- function(values) {
+      wrapped <- vapply(values, function(value) {
+        paste(strwrap(value, width = label_format), collapse = "\n")
+      }, character(1))
+      formatted <- gsub("\n", "<br>", .escape_html(wrapped), fixed = TRUE)
+      highlighted <- values %in% highlight_terms
+      emphasis <- paste0(
+        "color:", highlight_color, ";",
+        if (highlight_bold) "font-weight:bold;" else ""
+      )
+      formatted[highlighted] <- paste0(
+        "<span style=\"", emphasis, "\">",
+        formatted[highlighted], "</span>"
+      )
+      formatted
+    }
+    plot <- suppressMessages(
+      plot + ggplot2::scale_y_discrete(labels = label_formatter)
+    )
+    if (style$text$axis_text$show) {
+      axis_text_style <- style$text$axis_text
+      axis_text_family <- if (nzchar(axis_text_style$font_family)) {
+        axis_text_style$font_family
+      } else {
+        style$global$font_family
+      }
+      plot <- plot + ggplot2::theme(
+        axis.text.y = ggtext::element_markdown(
+          family = axis_text_family,
+          size = axis_text_style$size,
+          face = .text_face(axis_text_style),
+          hjust = c(left = 0, center = 0.5, right = 1)[[axis_text_style$align]],
+          color = "black"
+        )
+      )
+    }
+  }
   if (!is.null(x_label)) plot <- plot + ggplot2::labs(x = x_label)
   if (!is.null(y_label)) plot <- plot + ggplot2::labs(y = y_label)
   x_scale_args <- list()

@@ -33,6 +33,9 @@ GO_KEGG_plot(
   size_breaks = NULL,
   size_range = c(4, 12),
   point_alpha = 0.9,
+  highlight_terms = NULL,
+  highlight_color = "#D73027",
+  highlight_bold = TRUE,
   x_limits = NULL,
   x_breaks = NULL,
   x_expand = NULL,
@@ -98,12 +101,19 @@ or plotmath expressions such as \code{expression(-log[10](Pvalue))}.}
 \item{color_palette}{Continuous colors used for data-frame plots.}
 
 \item{size_breaks}{Optional numeric Count legend breaks for data-frame dot
-plots. \code{NULL} uses ggplot2 automatic breaks.}
+plots. \code{NULL} selects up to three representative observed values.}
 
 \item{size_range}{Two positive numbers defining the minimum and maximum
 point sizes.}
 
 \item{point_alpha}{Point opacity from 0 to 1.}
+
+\item{highlight_terms}{Optional character vector of pathway or term names to
+emphasize on the Y axis. Values are matched exactly against \code{label}.}
+
+\item{highlight_color}{Color used for highlighted term labels.}
+
+\item{highlight_bold}{Whether highlighted term labels are bold.}
 
 \item{x_limits, x_breaks}{Optional numeric X-axis limits and breaks.}
 

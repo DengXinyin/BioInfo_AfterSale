@@ -143,6 +143,9 @@ p <- GO_KEGG_plot(
 `cutoff` 是绘图前采用的筛选口径。因此可明确实现“按照原始 P 值而不是校正后
 P 值筛选和绘图”。
 
+两种气泡图、三档 Gene count 图例和指定通路标签强调的完整示例，见
+[使用 `GO_KEGG_plot()` 绘制 GO/KEGG 富集气泡图](docs/go-kegg-dotplot-tutorial.md)。
+
 ## ComplexHeatmap 热图
 
 ```r
@@ -224,5 +227,6 @@ p + ggplot2::theme(legend.position = "bottom")
 
 ## 当前范围
 
-版本 `0.2.0` 先覆盖 GO/KEGG ORA 的计算，以及 `dotplot` 和 `barplot`。指定
-通路单独标红、GO 三分面、圈图、结果 Excel 导出等需求将在后续版本逐步加入。
+版本 `0.2.0` 先覆盖 GO/KEGG ORA 的计算，以及 `dotplot` 和 `barplot`。气泡图
+支持 P 值、GeneRatio 或 RichFactor 横轴、三档 Count 图例，以及指定通路标签
+加粗和改色。GO 三分面、圈图、结果 Excel 导出等需求将在后续版本逐步加入。

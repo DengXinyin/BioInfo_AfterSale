@@ -15,6 +15,8 @@
   italic gene labels, column-label angles, and PDF/PNG output.
 # BioInfoAfterSale 0.2.1
 
+* Added independent LEfSe analysis, LDA score and cladogram functions in
+  `R/LEFSE.R`, extracted from the `micro:v2.45` microbiomeMarker workflow.
 * Added a modular WGCNA workflow derived from
   `192.168.30.202:23099/wgcna/wgcna:v1.6.7`, including expression QC,
   soft-power selection, module construction, no-trait module-sample summaries,

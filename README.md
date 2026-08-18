@@ -11,6 +11,9 @@
 - `GO_KEGG()`：统一入口，自动串联前两个函数。
 - `choose_plot_style()`：创建可供所有 ggplot2 图形复用的统一样式。
 - `Heatmap_plot()`：使用 ComplexHeatmap 绘制带 Z-score 和分组图例的热图。
+- `LEFSE_run()`：从 OTU 丰度、分类学表和分组信息计算 LEfSe marker。
+- `LEFSE_LDA_plot()`：从 marker 表绘制 LDA score 柱状图。
+- `LEFSE_cladogram_plot()`：绘制 LEfSe cladogram；支持两列分类学标签、单行分组图例和统一字体。
 - `WGCNA_run()`：串联表达矩阵质控、soft power、模块、ME、kME和可选性状/网络分析。
 - `WGCNA_prepare_expression()`：整理表达矩阵、变换、零值过滤和`goodSamplesGenes()`质控。
 - `WGCNA_select_power()`：支持scale-free诊断优先或复刻镜像样本数规则。
@@ -113,6 +116,24 @@ trait_result <- WGCNA_module_trait(
 ```
 
 15个左右样本仅处于WGCNA建议下限附近，结果应作为探索性网络解释；客户预筛选基因得到的是候选集合内部网络，不能替代全转录组网络。对于FPKM/TPM，建议比较原值与`log2p1`结果稳定性；对于原始count，建议先在包外完成VST等方差稳定化。
+
+## LEfSe
+
+LEfSe 模块代码位于 `R/LEFSE.R`，从
+`192.168.30.202:23099/micro_dy_gro/micro:v2.45` 的
+`microbiomeMarker` 工作流提取并重构。函数不调用 Docker；在独立 R 环境安装
+`microbiomeMarker`、`phyloseq`、`ggtree`、`ggplot2` 和 `dplyr` 后即可使用。
+
+```r
+colors <- c(
+  Control = "#4CAF50", Model = "#3F51B5",
+  `NR-HPS` = "#B30000", `R-HPS` = "#FFEB3B"
+)
+lefse <- LEFSE_run(otu, taxonomy, group, group_name = "Group")
+markers <- LEFSE_marker_table(lefse)
+LEFSE_LDA_plot(markers, colors, "LEFSE_LDA.pdf")
+LEFSE_cladogram_plot(lefse, colors, "LEFSE_cladogram.pdf")
+```
 
 ## 安装
 

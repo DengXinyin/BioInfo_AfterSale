@@ -2,3 +2,5 @@
 ^README\.Rmd$
 ^BioInfo_AfterSale\.Rproj$
 ^\.Rproj\.user$
+^WGCNA_workflow_analysis\.md$
+^WGCNA_example_tutorial\.md$

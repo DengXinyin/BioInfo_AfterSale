@@ -1,7 +1,7 @@
 Package: BioInfoAfterSale
 Type: Package
 Title: Reusable Bioinformatics After-Sales Analysis Workflows
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
     email = "DengXinyin@users.noreply.github.com")
 Author: Xinyin Deng [aut, cre]
@@ -9,7 +9,9 @@ Maintainer: Xinyin Deng <DengXinyin@users.noreply.github.com>
 Description: Provides simple, reusable entry points for bioinformatics
     after-sales analyses. The first module runs GO or KEGG over-representation
     analysis with 'clusterProfiler', visualizes enrichment results with
-    'enrichplot' and 'ggplot2', and exposes common report styling options.
+    'enrichplot' and 'ggplot2', exposes common report styling options, and
+    provides a modular weighted gene co-expression network workflow based on
+    'WGCNA'.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
@@ -21,6 +23,7 @@ Imports:
     circlize,
     ggplot2,
     ggtext,
+    WGCNA,
     grDevices,
     graphics,
     grid,

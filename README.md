@@ -11,6 +11,108 @@
 - `GO_KEGG()`：统一入口，自动串联前两个函数。
 - `choose_plot_style()`：创建可供所有 ggplot2 图形复用的统一样式。
 - `Heatmap_plot()`：使用 ComplexHeatmap 绘制带 Z-score 和分组图例的热图。
+- `WGCNA_run()`：串联表达矩阵质控、soft power、模块、ME、kME和可选性状/网络分析。
+- `WGCNA_prepare_expression()`：整理表达矩阵、变换、零值过滤和`goodSamplesGenes()`质控。
+- `WGCNA_select_power()`：支持scale-free诊断优先或复刻镜像样本数规则。
+- `WGCNA_module_sample()`：无外部表型时输出模块ME与样本/时间分组关系。
+
+## WGCNA
+
+WGCNA模块位于`R/WGCNA.R`，以
+`192.168.30.202:23099/wgcna/wgcna:v1.6.7`中的`/script/wgcna2.r`为基准。
+镜像的核心默认参数均可复现：`unsigned`网络/TOM、`deepSplit = 2`、
+`minModuleSize = 30`、`mergeCutHeight = 0.25`、
+`pamRespectsDendro = FALSE`、`maxBlockSize = 1000`及样本数soft power规则。
+
+完整的实际数据教程见[`WGCNA_example_tutorial.md`](WGCNA_example_tutorial.md)，
+可执行脚本见`inst/examples/WGCNA_example_tutorial.R`。
+
+### R包依赖
+
+WGCNA模块的非base直接依赖为`WGCNA`；其自身会使用`dynamicTreeCut`和
+`fastcluster`。绘图和文件输出使用R自带的`stats`、`graphics`、`grDevices`、
+`utils`和`tools`。每个函数体开头均以`# Required R packages:`注明对应依赖，
+并使用`WGCNA::函数`进行调用。环境构建示例：
+
+```r
+# 在联网的R环境中执行一次；正式分析函数不会在运行过程中自动安装包
+install.packages("WGCNA")
+```
+
+本包额外把流程拆成独立函数，并修正了两个不适合直接固化到通用包的行为：
+
+- soft power默认优先选择达到scale-free阈值且斜率为负的首个候选；无候选时才回退镜像规则。需要严格复刻镜像时使用`strategy = "image_rule"`；
+- 无表型时不构造“单个样本=1、其他样本=0”的伪性状，不输出缺乏统计解释的模块—单样本相关P值，而是输出每个模块在每个样本中的ME及可选分组汇总。
+
+完整入口：
+
+```r
+expression <- read.delim("selected_gene_expression_fpkm.tsv", row.names = 1,
+                         check.names = FALSE)
+sample_info <- read.delim("sampleinfo.tsv", check.names = FALSE)
+
+wgcna <- WGCNA_run(
+  expression,
+  sample_info = sample_info,
+  time_col = "time_group",
+  prepare_args = list(
+    transform = "log2p1",
+    keep_all_genes = TRUE,
+    remove_bad = FALSE
+  ),
+  power_args = list(
+    network_type = "unsigned",
+    strategy = "scale_free",
+    fit_cutoff = 0.9
+  ),
+  module_args = list(threads = 8),
+  output_dir = "WGCNA_Output"
+)
+```
+
+严格复刻v1.6.7镜像的power选择时：
+
+```r
+wgcna <- WGCNA_run(
+  expression,
+  sample_info = sample_info,
+  prepare_args = list(transform = "none", keep_all_genes = TRUE),
+  power_args = list(strategy = "image_rule", network_type = "unsigned"),
+  module_args = list(threads = 72)
+)
+```
+
+分步调用及主要返回内容：
+
+```r
+prepared <- WGCNA_prepare_expression(expression, transform = "log2p1")
+power <- WGCNA_select_power(prepared, strategy = "scale_free")
+modules <- WGCNA_build_modules(prepared, power, threads = 8)
+sample_result <- WGCNA_module_sample(
+  modules, sample_info = sample_info, time_col = "time_group"
+)
+membership <- WGCNA_module_membership(
+  modules, MEs = sample_result$MEs_oriented
+)
+
+WGCNA_plot_soft_threshold(power, "Soft_thresholding_power.pdf")
+WGCNA_export_network(
+  modules, threshold = 0.15, max_edges = 5000,
+  output_dir = "WGCNA_Output/Network"
+)
+```
+
+提供连续或已数值编码的外部性状时，可额外运行：
+
+```r
+trait_result <- WGCNA_module_trait(
+  modules, traits,
+  MEs = sample_result$MEs_oriented,
+  p_adjust_method = "bonferroni"
+)
+```
+
+15个左右样本仅处于WGCNA建议下限附近，结果应作为探索性网络解释；客户预筛选基因得到的是候选集合内部网络，不能替代全转录组网络。对于FPKM/TPM，建议比较原值与`log2p1`结果稳定性；对于原始count，建议先在包外完成VST等方差稳定化。
 
 ## 安装
 

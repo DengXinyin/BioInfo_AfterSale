@@ -13,3 +13,12 @@
 - Added `Heatmap_plot()` based on ComplexHeatmap, with configurable labels,
   clustering, Z-score scaling, sample groups, ordered legends, title styling,
   italic gene labels, column-label angles, and PDF/PNG output.
+# BioInfoAfterSale 0.2.1
+
+* Added a modular WGCNA workflow derived from
+  `192.168.30.202:23099/wgcna/wgcna:v1.6.7`, including expression QC,
+  soft-power selection, module construction, no-trait module-sample summaries,
+  optional module-trait correlations, kME, TOM network export, result writing,
+  and diagnostic plotting. All public entry points use the `WGCNA_` prefix.
+* Documented per-function R package requirements and added an executable
+  WGCNA tutorial using the validated 935-gene by 15-sample dataset.

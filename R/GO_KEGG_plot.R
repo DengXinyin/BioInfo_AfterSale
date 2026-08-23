@@ -8,7 +8,9 @@
 #' @param plot_type Either `"dotplot"` or `"barplot"`.
 #' @param filter_by Column used to filter terms: `"p.adjust"`, `"pvalue"`, or
 #'   `NULL` to keep every supplied row.
-#' @param cutoff Maximum value retained from `filter_by`.
+#' @param cutoff Strict upper cutoff for `filter_by`; retained rows satisfy
+#'   `0 < filter_by < cutoff`. This excludes zero-valued P values because they
+#'   cannot be represented faithfully by `-log10()`.
 #' @param show_category Maximum number of categories displayed.
 #' @param x X variable accepted by [enrichplot::dotplot()], normally
 #'   `"GeneRatio"` or `"Count"`. For data frames, any numeric column.
@@ -41,6 +43,10 @@
 #' @param highlight_color Color used for highlighted term labels.
 #' @param highlight_bold Whether highlighted term labels are bold.
 #' @param x_limits,x_breaks Optional numeric X-axis limits and breaks.
+#'   `x_limits` filters the plotted data; use `x_zoom` for visual zooming
+#'   without removing observations.
+#' @param x_zoom Optional numeric X-axis zoom passed to
+#'   [ggplot2::coord_cartesian()].
 #' @param x_expand Optional numeric expansion passed to
 #'   [ggplot2::scale_x_continuous()].
 #' @param legend_order Character vector defining guide order. Supported values
@@ -93,6 +99,7 @@ GO_KEGG_plot <- function(
     x_limits = NULL,
     x_breaks = NULL,
     x_expand = NULL,
+    x_zoom = NULL,
     legend_order = c("color", "size"),
     style = NULL,
     output_file = NULL,
@@ -101,6 +108,11 @@ GO_KEGG_plot <- function(
     dpi = NULL,
     device = NULL,
     ...) {
+
+  # Enrichment/differential-result plotting uses the strict rule 0 < p < 0.05
+  # (or the supplied cutoff). A reported p = 0 is treated as underflow or a
+  # below-detection value, excluded from filtering, and never plotted as an
+  # exact finite probability.
 
   color_was_missing <- missing(color)
   plot_type <- match.arg(plot_type)
@@ -151,6 +163,12 @@ GO_KEGG_plot <- function(
   }
   if (!is.null(x_breaks)) .assert_numeric_vector(x_breaks, "x_breaks")
   if (!is.null(x_expand)) .assert_numeric_vector(x_expand, "x_expand")
+  if (!is.null(x_zoom)) {
+    .assert_numeric_vector(x_zoom, "x_zoom", length_required = 2L)
+    if (x_zoom[[1]] >= x_zoom[[2]]) {
+      stop("`x_zoom` must be ordered from minimum to maximum.", call. = FALSE)
+    }
+  }
   if (!is.character(legend_order) || !length(legend_order) ||
       anyNA(legend_order) || anyDuplicated(legend_order) ||
       any(!legend_order %in% c("color", "size"))) {
@@ -196,8 +214,8 @@ GO_KEGG_plot <- function(
       )
     }
     if (!is.null(filter_by)) {
-      filter_values <- suppressWarnings(as.numeric(table[[filter_by]]))
-      table <- table[!is.na(filter_values) & filter_values <= cutoff, , drop = FALSE]
+      keep <- .filter_positive_pvalues(table[[filter_by]], filter_by, cutoff)
+      table <- table[keep, , drop = FALSE]
     }
     if (!nrow(table)) {
       stop("No enrichment terms remain for plotting.", call. = FALSE)
@@ -205,7 +223,18 @@ GO_KEGG_plot <- function(
 
     x_values <- suppressWarnings(as.numeric(table[[x]]))
     if (x_transform == "neg_log10") {
-      x_values <- -log10(pmax(x_values, .Machine$double.xmin))
+      non_positive <- !is.na(x_values) & x_values <= 0
+      if (any(non_positive)) {
+        warning(
+          sprintf(
+            "%d row(s) with %s <= 0 were excluded before -log10 transformation.",
+            sum(non_positive), x
+          ),
+          call. = FALSE
+        )
+      }
+      x_values[non_positive] <- NA_real_
+      x_values <- -log10(x_values)
     }
     color_values <- suppressWarnings(as.numeric(table[[color]]))
     size_values <- if (plot_type == "dotplot") {
@@ -331,6 +360,7 @@ GO_KEGG_plot <- function(
     if (length(x_scale_args)) {
       plot <- plot + do.call(ggplot2::scale_x_continuous, x_scale_args)
     }
+    if (!is.null(x_zoom)) plot <- plot + ggplot2::coord_cartesian(xlim = x_zoom)
     return(.finish_enrichment_plot(
       plot, style, output_file, figure_width, figure_height, dpi, device
     ))
@@ -437,6 +467,7 @@ GO_KEGG_plot <- function(
   if (length(x_scale_args)) {
     plot <- plot + do.call(ggplot2::scale_x_continuous, x_scale_args)
   }
+  if (!is.null(x_zoom)) plot <- plot + ggplot2::coord_cartesian(xlim = x_zoom)
   .finish_enrichment_plot(
     plot, style, output_file, figure_width, figure_height, dpi, device
   )

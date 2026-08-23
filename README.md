@@ -263,8 +263,10 @@ p <- GO_KEGG_plot(
 ```
 
 `pvalue_cutoff` 是富集计算阶段传给 `clusterProfiler` 的参数；`filter_by` 和
-`cutoff` 是绘图前采用的筛选口径。因此可明确实现“按照原始 P 值而不是校正后
-P 值筛选和绘图”。
+`cutoff` 是绘图前采用的筛选口径。绘图筛选严格保留 `0 < p < cutoff`，因此
+`p = 0` 会被排除并给出提示，避免把数值下溢误画成无限显著；这也适用于差异
+结果表按 `pvalue` 绘图时的 `p < 0.05 且 p > 0` 规则。因此可明确实现“按照
+原始 P 值而不是校正后 P 值筛选和绘图”。
 
 两种气泡图、三档 Gene count 图例和指定通路标签强调的完整示例，见
 [使用 `GO_KEGG_plot()` 绘制 GO/KEGG 富集气泡图](docs/go-kegg-dotplot-tutorial.md)。

@@ -95,7 +95,7 @@ Heatmap_plot <- function(
     legend_side = c("right", "left", "top", "bottom"),
     group_annotation_side = c("top", "bottom"),
     zscore_breaks = c(-2, 0, 2),
-    heatmap_colors = c("#0404FF", "white", "#FF1A1B"),
+    heatmap_colors = c("#2166AC", "#F7F7F7", "#B2182B"),
     na_color = "#BDBDBD",
     border = TRUE,
     output_file = NULL,
@@ -106,6 +106,9 @@ Heatmap_plot <- function(
     ...) {
 
   scale <- match.arg(scale)
+  if (missing(zscore_legend_title) && scale == "none") {
+    zscore_legend_title <- "Value"
+  }
   row_names_side <- match.arg(row_names_side)
   column_names_side <- match.arg(column_names_side)
   title_position <- match.arg(title_position)
@@ -145,6 +148,9 @@ Heatmap_plot <- function(
       anyNA(heatmap_colors) || any(!nzchar(heatmap_colors))) {
     stop("`heatmap_colors` must contain exactly three colors.", call. = FALSE)
   }
+  if (inherits(try(grDevices::col2rgb(heatmap_colors), silent = TRUE), "try-error")) {
+    stop("`heatmap_colors` must contain valid R colors.", call. = FALSE)
+  }
   if (!is.null(title) &&
       (!is.character(title) || length(title) != 1L || is.na(title))) {
     stop("`title` must be NULL or one character value.", call. = FALSE)
@@ -163,6 +169,24 @@ Heatmap_plot <- function(
   }
 
   if (scale == "row") {
+    row_sd <- apply(heat_matrix, 1L, stats::sd, na.rm = TRUE)
+    invalid_rows <- !is.finite(row_sd) | row_sd == 0
+    if (any(invalid_rows)) {
+      removed_rows <- rownames(heat_matrix)[invalid_rows]
+      removed_rows <- removed_rows[!is.na(removed_rows)]
+      warning(
+        sprintf(
+          "%d zero-variance row(s) were removed before row Z-score scaling%s.",
+          sum(invalid_rows),
+          if (length(removed_rows)) paste0(": ", paste(removed_rows, collapse = ", ")) else ""
+        ),
+        call. = FALSE
+      )
+      heat_matrix <- heat_matrix[!invalid_rows, , drop = FALSE]
+      if (!nrow(heat_matrix)) {
+        stop("No variable rows remain for row Z-score scaling.", call. = FALSE)
+      }
+    }
     heat_matrix <- t(base::scale(t(heat_matrix)))
   } else if (scale == "column") {
     heat_matrix <- base::scale(heat_matrix)

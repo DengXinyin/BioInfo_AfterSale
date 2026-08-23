@@ -145,7 +145,11 @@ LEFSE_LDA_plot <- function(
   if (!nrow(d)) stop("No markers meet `lda_cutoff`.", call. = FALSE)
   group_colors <- .lefse_validate_colors(group_colors, unique(d$enrich_group))
   d$enrich_group <- factor(d$enrich_group, levels = names(group_colors))
-  d$Taxonomy <- sub(".*\\|", "", d$feature)
+  terminal_taxonomy <- sub(".*\\|", "", d$feature)
+  duplicated_terminal <- duplicated(terminal_taxonomy) |
+    duplicated(terminal_taxonomy, fromLast = TRUE)
+  d$Taxonomy <- terminal_taxonomy
+  d$Taxonomy[duplicated_terminal] <- d$feature[duplicated_terminal]
   d <- dplyr::arrange(d, enrich_group, dplyr::desc(ef_lda))
   d$Taxonomy <- factor(
     make.unique(as.character(d$Taxonomy)),
@@ -170,8 +174,9 @@ LEFSE_LDA_plot <- function(
       plot.margin = ggplot2::margin(14, 38, 14, 14)
     )
   if (!is.null(output_file)) {
-    ggplot2::ggsave(output_file, p, width = figure_width, height = figure_height,
-                    device = grDevices::cairo_pdf, family = font_family, limitsize = FALSE)
+    .lefse_save_plot(
+      p, output_file, figure_width, figure_height, font_family = font_family
+    )
   }
   p
 }
@@ -180,7 +185,7 @@ LEFSE_LDA_plot <- function(
 #'
 #' @param lefse_result Result returned by [LEFSE_run()].
 #' @param group_colors Named colours matching enriched group names.
-#' @param output_file Optional PDF output path.
+#' @param output_file Optional PDF/PNG output path.
 #' @param clade_label_level Taxonomic level at which branch letters begin.
 #' @param font_family Font for all text layers.
 #' @param label_point_size Size of the coloured taxonomy-label squares.
@@ -237,10 +242,47 @@ LEFSE_cladogram_plot <- function(
   p$guides$guides$fill$params$override.aes$fill <- unname(group_colors)
 
   if (!is.null(output_file)) {
-    ggplot2::ggsave(output_file, p, width = figure_width, height = figure_height,
-                    device = grDevices::cairo_pdf, limitsize = FALSE)
+    .lefse_save_plot(p, output_file, figure_width, figure_height)
   }
   p
+}
+
+.lefse_save_plot <- function(
+    plot, output_file, width, height, font_family = NULL, dpi = 300) {
+  if (!is.character(output_file) || length(output_file) != 1L ||
+      is.na(output_file) || !nzchar(output_file)) {
+    stop("`output_file` must be one non-empty filename.", call. = FALSE)
+  }
+  output_dir <- dirname(output_file)
+  if (!dir.exists(output_dir)) {
+    stop("Output directory does not exist: ", output_dir, call. = FALSE)
+  }
+  extension <- tolower(tools::file_ext(output_file))
+  if (!extension %in% c("pdf", "png")) {
+    stop("`output_file` must end in .pdf or .png.", call. = FALSE)
+  }
+  save_args <- list(
+    filename = output_file,
+    plot = plot,
+    width = width,
+    height = height,
+    units = "in",
+    dpi = dpi,
+    limitsize = FALSE
+  )
+  if (extension == "pdf") {
+    save_args$device <- grDevices::cairo_pdf
+    if (!is.null(font_family)) save_args$family <- font_family
+  } else {
+    save_args$device <- function(filename, width, height, ...) {
+      grDevices::png(
+        filename = filename, width = width, height = height,
+        units = "in", res = dpi, type = "cairo"
+      )
+    }
+  }
+  do.call(ggplot2::ggsave, save_args)
+  invisible(NULL)
 }
 
 .lefse_require <- function(packages) {

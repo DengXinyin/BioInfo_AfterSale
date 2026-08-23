@@ -121,7 +121,33 @@
   if (!filter_by %in% names(table)) {
     stop(sprintf("Column '%s' is not present in the enrichment result.", filter_by), call. = FALSE)
   }
-  keep <- !is.na(table[[filter_by]]) & table[[filter_by]] <= cutoff
+  values <- suppressWarnings(as.numeric(table[[filter_by]]))
+  zero_count <- sum(!is.na(values) & values == 0)
+  if (zero_count) {
+    warning(
+      sprintf(
+        "%d row(s) with %s = 0 were excluded; valid enrichment filtering requires 0 < p < cutoff.",
+        zero_count, filter_by
+      ),
+      call. = FALSE
+    )
+  }
+  keep <- !is.na(values) & values > 0 & values < cutoff
   result@result <- result@result[keep, , drop = FALSE]
   result
+}
+
+.filter_positive_pvalues <- function(values, filter_by, cutoff) {
+  values <- suppressWarnings(as.numeric(values))
+  zero_count <- sum(!is.na(values) & values == 0)
+  if (zero_count) {
+    warning(
+      sprintf(
+        "%d row(s) with %s = 0 were excluded; valid enrichment filtering requires 0 < p < cutoff.",
+        zero_count, filter_by
+      ),
+      call. = FALSE
+    )
+  }
+  !is.na(values) & values > 0 & values < cutoff
 }

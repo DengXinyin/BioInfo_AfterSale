@@ -166,6 +166,25 @@ BioInfoAfterSale::GO_KEGG_plot(
 
 如果实际 Count 范围不同，应根据自己的数据修改这三个数值。
 
+绘图筛选严格保留 `0 < p < cutoff`。因此差异结果按原始 P 值筛选时，
+`p < 0.05 且 p > 0` 才会进入图形；`p = 0` 会被排除并发出提示，因为它
+通常表示数值下溢或低于检测下限，不能直接当作真实的零概率。
+
+如果只想放大横轴局部而不改变输入数据，可以使用 `x_zoom`；`x_limits` 则
+明确表示按范围过滤绘图数据：
+
+```r
+BioInfoAfterSale::GO_KEGG_plot(
+  enrichment_table,
+  filter_by = "pvalue",
+  cutoff = 0.05,
+  x = "pvalue",
+  x_transform = "neg_log10",
+  color = "RichFactor",
+  x_zoom = c(1, 6)
+)
+```
+
 ## 第 5 步：绘制原生 `enrichResult`
 
 `GO_KEGG_analyse()` 和 `clusterProfiler` 返回的通常是 `enrichResult` 对象。这类对象中的 `GeneRatio` 常采用 `"12/100"` 形式，`GO_KEGG_plot()` 会交给 `enrichplot` 正确解析。

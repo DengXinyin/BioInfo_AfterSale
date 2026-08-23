@@ -15,6 +15,24 @@ test_that("GO_KEGG_plot validates a data-frame result", {
   expect_error(GO_KEGG_plot(1), "enrichResult")
 })
 
+test_that("GO_KEGG_plot keeps only positive P values below the cutoff", {
+  table <- data.frame(
+    Description = c("Underflow", "Significant", "At cutoff", "Not significant"),
+    pvalue = c(0, 0.01, 0.05, 0.10),
+    RichFactor = c(0.1, 0.2, 0.3, 0.4),
+    Count = c(1, 2, 3, 4)
+  )
+  expect_warning(
+    plot <- GO_KEGG_plot(
+      table, filter_by = "pvalue", cutoff = 0.05,
+      x = "RichFactor", color = "pvalue", font_family = "sans"
+    ),
+    "pvalue = 0"
+  )
+  expect_equal(nrow(plot$data), 1)
+  expect_identical(as.character(plot$data$.Label), "Significant")
+})
+
 test_that("GO_KEGG_plot supports custom table mappings", {
   table <- data.frame(
     Description = c("Pathway A", "Pathway B"),

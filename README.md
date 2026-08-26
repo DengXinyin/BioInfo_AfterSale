@@ -271,6 +271,9 @@ p <- GO_KEGG_plot(
 两种气泡图、三档 Gene count 图例和指定通路标签强调的完整示例，见
 [使用 `GO_KEGG_plot()` 绘制 GO/KEGG 富集气泡图](docs/go-kegg-dotplot-tutorial.md)。
 
+带分组色带、Gene count 气泡和基因标签的富集分析条形图示例，见
+[使用 `enrichment_bar()` 绘制富集分析条形图](docs/enrichment-bar-tutorial.md)。
+
 ## ComplexHeatmap 热图
 
 ```r

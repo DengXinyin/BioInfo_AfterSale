@@ -353,6 +353,14 @@ p <- GO_KEGG_plot(existing_enrich_result, filter_by = "pvalue")
 p + ggplot2::theme(legend.position = "bottom")
 ```
 
+## PCA、火山图、Venn 和 GSEA
+
+仓库现已提供 `plot_pca()`、`plot_volcano()`、`plot_venn()` 和
+`plot_gsea()`，并统一兼容 `choose_plot_style()`。
+
+可直接运行的模拟数据和输出示例见
+[PCA、火山图、Venn 和 GSEA 可视化示例](docs/pca-volcano-venn-gsea-tutorial.md)。
+
 ## 当前范围
 
 版本 `0.2.0` 先覆盖 GO/KEGG ORA 的计算，以及 `dotplot` 和 `barplot`。气泡图

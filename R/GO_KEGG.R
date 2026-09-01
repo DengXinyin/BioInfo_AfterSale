@@ -59,3 +59,4 @@ GO_KEGG <- function(
   }
   invisible(output)
 }
+# All GO/KEGG workflow plot text prefers Times New Roman.

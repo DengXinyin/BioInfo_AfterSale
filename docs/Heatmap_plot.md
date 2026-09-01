@@ -2,6 +2,8 @@
 
 本教程会生成一组模拟的基因表达数据，并使用 `BioInfoAfterSale::Heatmap_plot()` 绘制热图。完成后，你会得到一张带有样本分组、行 Z-score、基因聚类和图例的 PNG 图片。
 
+所有字体优先使用 `Times New Roman`。聚类树支持默认层级聚类和显式按欧几里得距离构建的聚类树。
+
 > 本教程中的数据完全由 R 模拟，仅用于演示函数调用，不代表真实生物学实验。
 
 ## 准备工作
@@ -89,14 +91,14 @@ BioInfoAfterSale::Heatmap_plot(
   cluster_columns = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
-  row_names_font_family = "sans",
-  column_names_font_family = "sans",
+  row_names_font_family = "Times New Roman",
+  column_names_font_family = "Times New Roman",
   row_names_font_size = 9,
   column_names_font_size = 10,
   row_names_italic = FALSE,
   column_names_rot = 45,
   title = "Synthetic treatment-response genes",
-  title_font_family = "sans",
+  title_font_family = "Times New Roman",
   title_font_size = 16,
   title_font_face = "bold",
   zscore_legend_title = "Row Z-score",
@@ -104,7 +106,7 @@ BioInfoAfterSale::Heatmap_plot(
   legend_side = "right",
   zscore_breaks = c(-2, 0, 2),
   heatmap_colors = c("#2166AC", "#F7F7F7", "#B2182B"),
-  output_file = "heatmap_results/synthetic_expression_heatmap.png",
+  output_file = "docs/images/Heatmap_plot.png",
   figure_width = 8,
   figure_height = 7,
   dpi = 300
@@ -113,11 +115,25 @@ BioInfoAfterSale::Heatmap_plot(
 
 生成结果：
 
-![模拟表达热图](images/synthetic-expression-heatmap.png)
+![模拟表达热图](images/Heatmap_plot.png)
 
 图中每一行都单独进行 Z-score 标准化。红色表示该基因在相应样本中的相对表达量较高，蓝色表示相对表达量较低。它不表示不同基因之间的绝对表达量差异。
 
 本例关闭了列聚类，因此样本保持“对照组在前、处理组在后”的顺序；行聚类仍然开启，用于观察变化方向相近的基因是否聚在一起。
+
+默认层级聚类树：
+
+```r
+Heatmap_plot(expression_matrix, cluster_rows = TRUE,
+             row_clustering_method = "hierarchical")
+```
+
+按欧几里得距离构建完全连接层级聚类树：
+
+```r
+Heatmap_plot(expression_matrix, cluster_rows = TRUE,
+             row_clustering_method = "euclidean")
+```
 
 ## 第 4 步：输出 PDF
 
@@ -132,12 +148,12 @@ BioInfoAfterSale::Heatmap_plot(
   cluster_rows = TRUE,
   cluster_columns = FALSE,
   title = "Synthetic treatment-response genes",
-  title_font_family = "sans",
-  row_names_font_family = "sans",
-  column_names_font_family = "sans",
+  title_font_family = "Times New Roman",
+  row_names_font_family = "Times New Roman",
+  column_names_font_family = "Times New Roman",
   zscore_legend_title = "Row Z-score",
   group_legend_title = "Sample group",
-  output_file = "heatmap_results/synthetic_expression_heatmap.pdf",
+  output_file = "docs/images/Heatmap_plot.pdf",
   figure_width = 8,
   figure_height = 7
 )

@@ -6,6 +6,9 @@
   style
 }
 
+# All plot text prefers Times New Roman. Install/register that font on the
+# target system when exact Times New Roman glyphs are required.
+
 .save_bioinfo_plot <- function(plot, style, output_file, width, height, dpi) {
   if (is.null(output_file)) return(invisible(plot))
   ggplot2::ggsave(
@@ -25,6 +28,8 @@
 #' @param ellipse Draw group confidence ellipses.
 #' @param ellipse_level Confidence level.
 #' @param show_labels Display sample labels.
+#' @param label_repel Use ggrepel when available to reduce label overlap.
+#' @param legend_inside Numeric x/y position for the legend inside the panel.
 #' @param title Plot title.
 #' @param style A style from [choose_plot_style()].
 #' @param output_file Optional output filename.
@@ -34,6 +39,7 @@
 plot_pca <- function(data, pc1 = "PC1", pc2 = "PC2", group = "Group",
                      sample = "Sample", variance = NULL, ellipse = TRUE,
                      ellipse_level = 0.95, show_labels = TRUE,
+                     label_repel = TRUE, legend_inside = c(0.98, 0.98),
                      title = "Principal Component Analysis", style = NULL,
                      output_file = NULL, width = NULL, height = NULL, dpi = NULL) {
   style <- .plot_style_or_default(style)
@@ -45,10 +51,34 @@ plot_pca <- function(data, pc1 = "PC1", pc2 = "PC2", group = "Group",
   xlab <- if (is.null(variance)) pc1 else sprintf("%s (%.2f%%)", pc1, variance[1])
   ylab <- if (is.null(variance)) pc2 else sprintf("%s (%.2f%%)", pc2, variance[2])
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data[[pc1]], y = .data[[pc2]], color = .data[[group]]))
-  if (ellipse) p <- p + ggplot2::stat_ellipse(ggplot2::aes(fill = .data[[group]]), geom = "polygon", level = ellipse_level, alpha = .16, linewidth = .7)
+  if (ellipse) p <- p + ggplot2::stat_ellipse(
+    ggplot2::aes(fill = .data[[group]]), geom = "polygon", level = ellipse_level,
+    alpha = .16, linewidth = .7, show.legend = FALSE
+  )
   p <- p + ggplot2::geom_point(size = 3) + ggplot2::scale_color_manual(values = pal) +
     ggplot2::scale_fill_manual(values = pal) + ggplot2::labs(x = xlab, y = ylab, title = title, color = NULL, fill = NULL)
-  if (show_labels) p <- p + ggplot2::geom_text(ggplot2::aes(label = .data[[sample]]), vjust = -0.7, check_overlap = TRUE, show.legend = FALSE)
-  p <- p + style$ggplot_theme
+  if (show_labels) {
+    if (isTRUE(label_repel) && requireNamespace("ggrepel", quietly = TRUE)) {
+      p <- p + ggrepel::geom_text_repel(
+        ggplot2::aes(label = .data[[sample]]), show.legend = FALSE,
+        family = style$global$font_family, size = style$text$data_label$size / 3.2,
+        max.overlaps = Inf
+      )
+    } else {
+      p <- p + ggplot2::geom_text(
+        ggplot2::aes(label = .data[[sample]]), vjust = -0.7,
+        check_overlap = TRUE, show.legend = FALSE
+      )
+    }
+  }
+  p <- p + style$ggplot_theme + ggplot2::theme(
+    legend.position = legend_inside,
+    legend.justification = c("right", "top"),
+    legend.background = ggplot2::element_blank(),
+    legend.key = ggplot2::element_blank()
+  ) + ggplot2::guides(
+    fill = "none",
+    color = ggplot2::guide_legend(override.aes = list(fill = NA, shape = 16))
+  )
   .save_bioinfo_plot(p, style, output_file, width, height, dpi); p
 }

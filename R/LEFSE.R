@@ -10,7 +10,8 @@
 # exactly, use the same versions of microbiomeMarker, phyloseq, ggtree and
 # ggplot2 as installed in that image.  The functions below do NOT call Docker.
 # A system-installed font (for example Times New Roman) is additionally needed
-# when `font_family = "Times New Roman"` is used for PDF output.
+# All LEfSe plot text prefers Times New Roman; when `font_family = "Times New Roman"`
+# is used for PDF output.
 # ============================================================================
 #'
 #' LEfSe analysis and report-style visualisation

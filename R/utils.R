@@ -151,3 +151,4 @@
   }
   !is.na(values) & values > 0 & values < cutoff
 }
+# Plotting functions in this package prefer Times New Roman for all text.

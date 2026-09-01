@@ -95,3 +95,4 @@ GO_KEGG_analyse <- function(
     maxGSSize = max_gs_size, ...
   )
 }
+# All downstream GO/KEGG plot text prefers Times New Roman.

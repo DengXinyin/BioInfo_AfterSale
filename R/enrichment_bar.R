@@ -2,6 +2,7 @@
 
 # Advanced enrichment bar plot compatible with BioInfo_AfterSale::choose_plot_style().
 # Required columns: group, Description, pvalue, count, geneID
+# All enrichment-bar text prefers Times New Roman through the supplied style.
 
 suppressPackageStartupMessages({
   library(readxl)

@@ -5,12 +5,14 @@
 #' @param ranked_metric Numeric ranked metric of the same length.
 #' @param title Optional title.
 #' @param statistics Optional named values displayed in the top panel.
+#' Statistics are annotated only in the top running-score panel.
 #' @param colors Positive and negative colors.
 #' @param style A style from [choose_plot_style()].
 #' @param output_file Optional output filename.
 #' @param width,height,dpi Optional output overrides.
 #' @return A faceted ggplot object.
 #' @export
+# All GSEA text prefers Times New Roman; the style family controls all labels.
 plot_gsea <- function(running_score, hits, ranked_metric, title = NULL,
                       statistics = NULL, colors = c("#E25659", "#335372"),
                       style = NULL, output_file = NULL, width = NULL,
@@ -31,7 +33,15 @@ plot_gsea <- function(running_score, hits, ranked_metric, title = NULL,
     ggplot2::theme(panel.spacing.y=grid::unit(0,"pt"),strip.placement="outside",strip.background=ggplot2::element_blank())
   if (!is.null(statistics)) {
     label <- paste(names(statistics),format(statistics,digits=3),sep=" = ",collapse="\n")
-    p <- p + ggplot2::annotate("text",x=Inf,y=Inf,label=label,hjust=1.05,vjust=1.15)
+    stat_data <- data.frame(
+      x = Inf, y = Inf, label = label,
+      panel = factor("Running Enrichment Score", levels = levels(panels))
+    )
+    p <- p + ggplot2::geom_text(
+      data = stat_data, ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
+      inherit.aes = FALSE, hjust = 1.05, vjust = 1.15,
+      family = style$global$font_family, size = style$text$data_label$size / 3.2
+    )
   }
   .save_bioinfo_plot(p, style, output_file, width, height, dpi); p
 }

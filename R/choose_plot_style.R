@@ -1,3 +1,15 @@
+# All plot text prefers Times New Roman; this is also the default family.
+.resolve_plot_font_family <- function(font_family) {
+  if (!identical(font_family, "Times New Roman") || !nzchar(Sys.which("fc-match"))) {
+    return(font_family)
+  }
+  matched <- tryCatch(
+    paste(system2("fc-match", c("-f", "%{family}", font_family), stdout = TRUE), collapse = " "),
+    error = function(e) ""
+  )
+  if (grepl("Times New Roman", matched, fixed = TRUE)) font_family else "serif"
+}
+
 .plot_text_defaults <- function() {
   list(
     title = list(font_family = "", size = 24, bold = TRUE, italic = FALSE,
@@ -181,6 +193,7 @@ choose_plot_style <- function(
   .assert_positive_number(dpi, "dpi")
   .assert_positive_number(figure_width, "figure_width")
   .assert_positive_number(figure_height, "figure_height")
+  font_family <- .resolve_plot_font_family(font_family)
   if (is.null(group_palette)) group_palette <- .plot_group_palette()
 
   overrides <- list(

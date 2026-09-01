@@ -908,3 +908,4 @@ WGCNA_open_device <- function(filename, width, height) {
     stop("`output_file` must end in .pdf or .png.", call. = FALSE)
   }
 }
+# All WGCNA plot text prefers Times New Roman where a font family is configurable.

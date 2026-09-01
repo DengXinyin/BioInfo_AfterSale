@@ -1,5 +1,7 @@
 # 用 `enrichment_bar()` 绘制富集分析条形图
 
+本教程中的所有字体优先使用 `Times New Roman`。
+
 本教程演示如何用 `BioInfoAfterSale::enrichment_bar()` 绘制带分组色带、Gene
 count 气泡、通路名称和基因标签的富集分析条形图。示例数据直接写在文档中，
 复制代码即可运行，不需要额外准备 Excel 文件。
@@ -86,7 +88,7 @@ enrichment_table <- data.frame(
 
 ```r
 bar_style <- choose_plot_style(
-  font_family = "Arial",
+  font_family = "Times New Roman",
   theme = "classic",
   dpi = 300,
   figure_width = 8,
@@ -116,7 +118,7 @@ bar_style <- choose_plot_style(
 p <- enrichment_bar(
   data = enrichment_table,
   style = bar_style,
-  output_file = "enrichment_bar_results/enrichment_bar.png"
+  output_file = "docs/images/enrichment_bar.png"
 )
 
 p
@@ -141,7 +143,7 @@ enrichment_bar(
   data = enrichment_table,
   style = bar_style,
   gene_scale = 0,
-  output_file = "enrichment_bar_results/enrichment_bar_without_genes.png"
+  output_file = "docs/images/enrichment_bar_without_genes.png"
 )
 ```
 
@@ -151,7 +153,7 @@ enrichment_bar(
 
 ```r
 bottom_style <- choose_plot_style(
-  font_family = "Arial",
+  font_family = "Times New Roman",
   theme = "classic",
   dpi = 300,
   figure_width = 8,
@@ -173,7 +175,7 @@ bottom_style <- choose_plot_style(
 enrichment_bar(
   data = enrichment_table,
   style = bottom_style,
-  output_file = "enrichment_bar_results/enrichment_bar_bottom_legend.png"
+  output_file = "docs/images/enrichment_bar_bottom_legend.png"
 )
 ```
 
@@ -187,7 +189,7 @@ my_table <- readxl::read_excel("my_enrichment_result.xlsx")
 enrichment_bar(
   data = my_table,
   style = bar_style,
-  output_file = "enrichment_bar_results/my_enrichment_bar.png"
+  output_file = "docs/images/my_enrichment_bar.png"
 )
 ```
 

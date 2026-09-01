@@ -2,6 +2,8 @@
 
 本教程使用一组模拟富集结果，演示如何只调用 `BioInfoAfterSale::GO_KEGG_plot()` 绘制两种常见气泡图：横轴为 `-log10(P value)`，以及横轴为 `RichFactor` 或 `GeneRatio`。教程还包括 Gene count 三档图例和指定通路标签强调。
 
+所有字体优先使用 `Times New Roman`。两种 GO-Dotplot 都按绘图指标降序排列，最显著的 P 值（即最大的 `-log10(Pvalue)`）或最高的 Rich factor 放在最上方。
+
 > 模拟数据只用于演示绘图接口，不代表真实 GO 或 KEGG 富集结果。
 
 ## 准备工作
@@ -84,9 +86,9 @@ BioInfoAfterSale::GO_KEGG_plot(
   label = "Description",
   size = "Count",
   order_by = "pvalue",
-  decreasing = FALSE,
+  decreasing = TRUE,
   title = "Simulated GO enrichment",
-  font_family = "sans",
+  font_family = "Times New Roman",
   base_size = 13,
   x_label = expression(-log[10](Pvalue)),
   color_label = "Rich factor",
@@ -99,16 +101,27 @@ BioInfoAfterSale::GO_KEGG_plot(
   highlight_terms = c("DNA repair", "Response to oxidative stress"),
   highlight_color = "#7B2CBF",
   highlight_bold = TRUE,
-  output_file = "go_kegg_results/go_pvalue_dotplot.png",
+  output_file = "docs/images/GO_KEGG_plot_pvalue.png",
   figure_width = 9,
   figure_height = 6.5,
   dpi = 300
 )
 ```
 
-![以负对数 P 值为横轴的 GO 富集气泡图](images/go-enrichment-pvalue-dotplot.png)
+![以负对数 P 值为横轴的 GO 富集气泡图](images/GO_KEGG_plot_pvalue.png)
 
 `Gene count` 默认从当前展示的数据中选择最多三个代表值。指定的两个通路名称显示为紫色粗体。
+
+如果横轴使用校正后 P 值，将 `x = "p.adjust"`，并使用带下标的标签：
+`x_label = expression(-log[10](Padj))`。如果使用原始 P 值，则使用
+`x_label = expression(-log[10](Pvalue))`。
+
+```r
+GO_KEGG_plot(enrichment_table, x = "p.adjust", x_transform = "neg_log10",
+             color = "RichFactor", order_by = "p.adjust", decreasing = TRUE,
+             x_label = expression(-log[10](Padj)),
+             output_file = "docs/images/GO_KEGG_plot_padj.png")
+```
 
 ## 第 3 步：绘制 Rich factor 气泡图
 
@@ -129,22 +142,23 @@ BioInfoAfterSale::GO_KEGG_plot(
   order_by = "RichFactor",
   decreasing = TRUE,
   title = "Simulated GO enrichment",
-  font_family = "sans",
+  font_family = "Times New Roman",
   base_size = 13,
   x_label = "Rich factor",
-  color_label = "Adjusted P value",
+  color_transform = "neg_log10",
+  color_label = expression(-log[10](Padj)),
   size_label = "Gene count",
   color_palette = c(
     "#B2182B", "#EF8A62", "#F7F7F7", "#67A9CF", "#2166AC"
   ),
-  output_file = "go_kegg_results/go_richfactor_dotplot.png",
+  output_file = "docs/images/GO_KEGG_plot_richfactor.png",
   figure_width = 9,
   figure_height = 6.5,
   dpi = 300
 )
 ```
 
-![以 Rich factor 为横轴的 GO 富集气泡图](images/go-enrichment-richfactor-dotplot.png)
+![以 Rich factor 为横轴的 GO 富集气泡图](images/GO_KEGG_plot_richfactor.png)
 
 在这张图中，越靠右表示富集比例越高。颜色图例中较小的校正 P 值使用红色，较大的值使用蓝色。
 
@@ -202,13 +216,13 @@ BioInfoAfterSale::GO_KEGG_plot(
   highlight_terms = c("DNA repair", "Oxidative stress"),
   highlight_color = "#7B2CBF",
   highlight_bold = TRUE,
-  output_file = "go_kegg_results/go_native_dotplot.png",
+  output_file = "docs/images/GO_KEGG_plot_native.png",
   figure_width = 9,
   figure_height = 6.5
 )
 ```
 
-![原生 enrichResult 的 GeneRatio 气泡图](images/go-enrichment-native-dotplot.png)
+![原生 enrichResult 的 GeneRatio 气泡图](images/GO_KEGG_plot_native.png)
 
 普通数据框中的 `GeneRatio` 需要是数值列；如果它仍然是 `"12/100"` 字符串，建议使用原生 `enrichResult`，或者先在数据整理阶段转换为数值。
 

@@ -13,6 +13,9 @@
   invisible(NULL)
 }
 
+# All heatmap text prefers Times New Roman. The font must be installed on the
+# target system for exact glyph selection; PDF metrics use a portable fallback.
+
 #' Draw a configurable ComplexHeatmap heatmap
 #'
 #' Draws an expression or Z-score matrix with optional sample-group
@@ -32,6 +35,10 @@
 #' @param show_row_names,show_column_names Whether to display row and column
 #'   names.
 #' @param cluster_rows,cluster_columns Whether to cluster rows and columns.
+#' @param row_clustering_method,column_clustering_method Clustering mode:
+#'   `"hierarchical"` uses ComplexHeatmap's hierarchical tree, while
+#'   `"euclidean"` explicitly builds a complete-linkage tree from Euclidean
+#'   distances.
 #' @param row_names_side,column_names_side Label sides accepted by
 #'   [ComplexHeatmap::Heatmap()].
 #' @param row_names_font_family,column_names_font_family Font families for row
@@ -75,6 +82,8 @@ Heatmap_plot <- function(
     show_column_names = TRUE,
     cluster_rows = TRUE,
     cluster_columns = TRUE,
+    row_clustering_method = c("hierarchical", "euclidean"),
+    column_clustering_method = c("hierarchical", "euclidean"),
     row_names_side = c("right", "left"),
     column_names_side = c("bottom", "top"),
     row_names_font_family = "Times New Roman",
@@ -82,7 +91,7 @@ Heatmap_plot <- function(
     row_names_font_size = 10,
     column_names_font_size = 12,
     row_names_italic = TRUE,
-    column_names_rot = 0,
+    column_names_rot = 45,
     title = NULL,
     title_position = c("top", "bottom", "left", "right"),
     title_font_family = "Times New Roman",
@@ -115,6 +124,8 @@ Heatmap_plot <- function(
   title_font_face <- match.arg(title_font_face)
   legend_side <- match.arg(legend_side)
   group_annotation_side <- match.arg(group_annotation_side)
+  row_clustering_method <- match.arg(row_clustering_method)
+  column_clustering_method <- match.arg(column_clustering_method)
 
   for (argument in c(
     "show_row_names", "show_column_names", "cluster_rows", "cluster_columns",
@@ -192,6 +203,15 @@ Heatmap_plot <- function(
     heat_matrix <- base::scale(heat_matrix)
   }
   heat_matrix[is.nan(heat_matrix)] <- 0
+
+  row_cluster <- cluster_rows
+  column_cluster <- cluster_columns
+  if (isTRUE(cluster_rows) && identical(row_clustering_method, "euclidean")) {
+    row_cluster <- stats::hclust(stats::dist(heat_matrix, method = "euclidean"), method = "complete")
+  }
+  if (isTRUE(cluster_columns) && identical(column_clustering_method, "euclidean")) {
+    column_cluster <- stats::hclust(stats::dist(t(heat_matrix), method = "euclidean"), method = "complete")
+  }
 
   color_function <- circlize::colorRamp2(zscore_breaks, heatmap_colors)
   manual_legends <- list()
@@ -292,8 +312,8 @@ Heatmap_plot <- function(
       name = zscore_legend_title,
       col = color_function,
       na_col = na_color,
-      cluster_rows = cluster_rows,
-      cluster_columns = cluster_columns,
+      cluster_rows = row_cluster,
+      cluster_columns = column_cluster,
       show_row_names = show_row_names,
       show_column_names = show_column_names,
       row_names_side = row_names_side,

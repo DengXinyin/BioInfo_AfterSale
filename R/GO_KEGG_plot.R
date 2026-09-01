@@ -17,6 +17,8 @@
 #' @param x_transform X-axis transformation for data frames: `"identity"` or
 #'   `"neg_log10"`.
 #' @param color Color variable passed to enrichplot.
+#' @param color_transform Color transformation for data-frame plots:
+#'   `"identity"` or `"neg_log10"`.
 #' @param label Label column used for data-frame plots.
 #' @param size Point-size column used for data-frame dot plots.
 #' @param order_by Ordering variable passed to enrichplot.
@@ -64,6 +66,7 @@
 #'
 #' @return A ggplot object.
 #' @export
+# All GO/KEGG plot text prefers Times New Roman.
 GO_KEGG_plot <- function(
     result,
     plot_type = c("dotplot", "barplot"),
@@ -73,12 +76,13 @@ GO_KEGG_plot <- function(
     x = "GeneRatio",
     x_transform = c("identity", "neg_log10"),
     color = filter_by,
+    color_transform = c("identity", "neg_log10"),
     label = "Description",
     size = "Count",
     order_by = x,
     decreasing = TRUE,
     title = NULL,
-    font_family = "Arial",
+    font_family = "Times New Roman",
     base_size = 14,
     title_size = base_size + 2,
     axis_text_size = base_size,
@@ -117,6 +121,7 @@ GO_KEGG_plot <- function(
   color_was_missing <- missing(color)
   plot_type <- match.arg(plot_type)
   x_transform <- match.arg(x_transform)
+  color_transform <- match.arg(color_transform)
   if (!is.null(filter_by)) filter_by <- match.arg(filter_by)
   if (color_was_missing && is.null(filter_by)) {
     color <- if (is.data.frame(result)) x else "p.adjust"
@@ -237,6 +242,10 @@ GO_KEGG_plot <- function(
       x_values <- -log10(x_values)
     }
     color_values <- suppressWarnings(as.numeric(table[[color]]))
+    if (color_transform == "neg_log10") {
+      color_values[color_values <= 0] <- NA_real_
+      color_values <- -log10(color_values)
+    }
     size_values <- if (plot_type == "dotplot") {
       suppressWarnings(as.numeric(table[[size]]))
     } else {
@@ -254,7 +263,9 @@ GO_KEGG_plot <- function(
     labels <- vapply(term_names, function(value) {
       paste(strwrap(value, width = label_format), collapse = "\n")
     }, character(1))
-    order_values <- if (identical(order_by, x)) {
+    order_values <- if (identical(order_by, x) ||
+                        (identical(x_transform, "neg_log10") &&
+                         order_by %in% c("pvalue", "p.adjust"))) {
       x_values
     } else if (order_by %in% names(table)) {
       suppressWarnings(as.numeric(table[[order_by]]))
@@ -297,12 +308,18 @@ GO_KEGG_plot <- function(
 
     if (is.null(x_label)) {
       x_label <- if (x_transform == "neg_log10") {
-        expression(-log[10](Pvalue))
+        if (identical(x, "p.adjust")) expression(-log[10](Padj)) else expression(-log[10](Pvalue))
       } else {
         x
       }
     }
-    if (is.null(color_label)) color_label <- color
+    if (is.null(color_label)) {
+      color_label <- if (color_transform == "neg_log10" && identical(color, "p.adjust")) {
+        expression(-log[10](Padj))
+      } else if (color_transform == "neg_log10" && identical(color, "pvalue")) {
+        expression(-log[10](Pvalue))
+      } else color
+    }
     if (is.null(size_label)) size_label <- size
 
     if (plot_type == "dotplot") {

@@ -28,6 +28,7 @@ Imports:
     ggtree,
     microbiomeMarker,
     phyloseq,
+    vegan,
     WGCNA,
     grDevices,
     graphics,

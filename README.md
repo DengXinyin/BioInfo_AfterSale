@@ -11,6 +11,8 @@
 - `GO_KEGG()`：统一入口，自动串联前两个函数。
 - `choose_plot_style()`：创建可供所有 ggplot2 图形复用的统一样式。
 - `Heatmap_plot()`：使用 ComplexHeatmap 绘制带 Z-score 和分组图例的热图。
+- `plot_dot_heatmap()`、`plot_cross_heatmap()`、`plot_circular_heatmap()`：绘制 Spearman/Pearson 相关的点阵、矩形和圆形热图。
+- `plot_rda()`：执行 Hellinger 变换、VIF 筛选、置换检验并绘制 RDA 排序图。
 - `LEFSE_run()`：从 OTU 丰度、分类学表和分组信息计算 LEfSe marker。
 - `LEFSE_LDA_plot()`：从 marker 表绘制 LDA score 柱状图。
 - `LEFSE_cladogram_plot()`：绘制 LEfSe cladogram；支持两列分类学标签、单行分组图例和统一字体。

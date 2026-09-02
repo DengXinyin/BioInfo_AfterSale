@@ -33,6 +33,23 @@ test_that("GO_KEGG_plot keeps only positive P values below the cutoff", {
   expect_identical(as.character(plot$data$.Label), "Significant")
 })
 
+test_that("volcano_plot classifies genes and adds three threshold lines", {
+  table <- data.frame(
+    log2FoldChange = c(-2, -1, 0, 1, 2, NA),
+    padj = c(0.01, 0.01, 0.01, 0.05, 0.001, 0)
+  )
+  expect_warning(
+    plot <- volcano_plot(table, font_family = "sans"),
+    "non-positive padj"
+  )
+  expect_equal(table(plot$data$.Group), c(Down = 1, `Not significant` = 1, Up = 2))
+  expect_equal(length(plot$layers), 3)
+  expect_equal(plot$scales$get_scales("colour")$breaks,
+               c("Up", "Down", "Not significant"))
+  expect_equal(attr(plot, "log2fc_cutoff"), 1)
+  expect_equal(attr(plot, "padj_cutoff"), 0.05)
+})
+
 test_that("GO_KEGG_plot supports custom table mappings", {
   table <- data.frame(
     Description = c("Pathway A", "Pathway B"),
@@ -328,3 +345,337 @@ test_that("Heatmap_plot saves PDF output", {
     "strictly increasing"
   )
 })
+
+test_that("plot_pca computes scores and stores group/sample columns", {
+  set.seed(42)
+  ng <- 20; ns <- 60
+  expr <- matrix(rnorm(ng * ns, mean = 5, sd = 1.5), nrow = ng, ncol = ns)
+  group <- rep(c("Control", "Treatment_A", "Treatment_B"), each = 20)
+  expr[1:4, group == "Treatment_A"] <- expr[1:4, group == "Treatment_A"] + 2
+  expr[1:4, group == "Treatment_B"] <- expr[1:4, group == "Treatment_B"] - 2
+  colnames(expr) <- paste0("S", seq_len(ns))
+  rownames(expr) <- paste0("g", seq_len(ng))
+  df <- as.data.frame(t(expr))
+  df$Sample <- colnames(expr)
+  df$Group <- group
+
+  plot <- plot_pca(df, sample_column = "Sample", group_column = "Group",
+                   title = "PCA pilot")
+  expect_s3_class(plot, "ggplot")
+  expect_equal(nrow(plot$data), ns)
+  expect_true(all(c(".PC1", ".PC2", ".Group", ".Sample") %in% names(plot$data)))
+  expect_equal(levels(plot$data$.Group),
+               c("Control", "Treatment_A", "Treatment_B"))
+  expect_equal(attr(plot, "x_pc"), 1)
+  expect_equal(attr(plot, "y_pc"), 2)
+  expect_match(plot$labels$x, "PC1 \\([0-9.]+%\\)")
+  expect_match(plot$labels$y, "PC2 \\([0-9.]+%\\)")
+  colour_scale <- plot$scales$get_scales("colour")
+  expect_equal(colour_scale$name, "Group")
+  expect_equal(colour_scale$breaks, c("Control", "Treatment_A", "Treatment_B"))
+  # default toolbox palette is applied per group (visible in built data)
+  built <- ggplot2::ggplot_build(plot)
+  point_data <- built$data[[1]]
+  expect_setequal(unique(point_data$colour),
+                  c("#4DBBD5", "#E64B35", "#00A087"))
+})
+
+test_that("plot_pca supports custom PC pair and sample labels", {
+  set.seed(1)
+  ng <- 15; ns <- 30
+  expr <- matrix(rnorm(ng * ns), nrow = ng, ncol = ns)
+  group <- rep(c("A", "B"), each = 15)
+  colnames(expr) <- paste0("s", seq_len(ns))
+  rownames(expr) <- paste0("g", seq_len(ng))
+  df <- as.data.frame(t(expr))
+  df$Sample <- colnames(expr)
+  df$Group <- group
+
+  plot <- plot_pca(df, x_pc = 3, y_pc = 4, show_labels = TRUE,
+                   group_colors = c(A = "#E64B35", B = "#4DBBD5"))
+  expect_equal(attr(plot, "x_pc"), 3)
+  expect_equal(attr(plot, "y_pc"), 4)
+  expect_match(plot$labels$x, "PC3 \\([0-9.]+%\\)")
+  expect_match(plot$labels$y, "PC4 \\([0-9.]+%\\)")
+  expect_true(any(vapply(plot$layers, function(l) inherits(l$geom, "GeomText"),
+                         logical(1))))
+  built <- ggplot2::ggplot_build(plot)
+  expect_setequal(unique(built$data[[1]]$colour), c("#E64B35", "#4DBBD5"))
+})
+
+test_that("plot_pca validates inputs and reports missing columns", {
+  set.seed(7)
+  df <- data.frame(Sample = paste0("S", 1:6),
+                   Group = rep(c("A", "B"), each = 3),
+                   x = rnorm(6), y = rnorm(6), z = rnorm(6))
+  expect_error(plot_pca(df, group_column = "Nope"), "missing column")
+  expect_error(plot_pca(df, expr_columns = c("x", "nope")), "missing column")
+  expect_error(plot_pca(df, expr_columns = "x"), "At least two")
+  expect_error(plot_pca(df, point_size = -1), "positive")
+  expect_error(plot_pca(df, x_pc = 1.5), "whole number")
+})
+test_that("plot_venn draws a three-set Venn from indicator columns", {
+  df <- data.frame(
+    Gene = paste0("g", 1:12),
+    DEG_SetA = c(1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+    DEG_SetB = c(0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0),
+    DEG_SetC = c(0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0)
+  )
+  plot <- plot_venn(df, id_column = "Gene", title = "Venn")
+  expect_s3_class(plot, "ggplot")
+  expect_equal(attr(plot, "figure_width"), 8)
+  plot2 <- plot_venn(df, id_column = "Gene",
+                     set_colors = c("#E64B35", "#4DBBD5", "#00A087"))
+  expect_s3_class(plot2, "ggplot")
+})
+
+test_that("plot_venn accepts a list input and renames sets", {
+  sets <- list(A = letters[1:5], B = letters[3:7], C = letters[6:9])
+  plot <- plot_venn(sets, set_names = c("Set A", "Set B", "Set C"))
+  expect_s3_class(plot, "ggplot")
+  expect_error(plot_venn(list(A = letters[1:3])), "two or three")
+})
+
+test_that("plot_venn validates inputs", {
+  df <- data.frame(id = paste0("g", 1:6), a = c(1, 1, 0, 0, 0, 0), b = c(0, 0, 1, 1, 0, 0))
+  expect_error(plot_venn(df, id_column = "nope"), "not a column")
+  expect_error(plot_venn(df, id_column = "id", set_columns = c("x", "y")),
+               "missing column")
+  expect_error(plot_venn(df, id_column = "id", set_columns = c("a", "b"),
+                         set_colors = c("red", "blue", "green")),
+               "must match the number of sets")
+  expect_error(plot_venn(df, fill_alpha = 2), "between 0 and 1")
+  expect_error(plot_venn(1), "data frame or a named list")
+})
+test_that("plot_violin_box draws a violin+box+jitter plot", {
+  df <- data.frame(
+    Species = rep(c("setosa", "versicolor", "virginica"), each = 10),
+    Feature = rep("Sepal.Length", 30),
+    Value = c(rnorm(10, 5), rnorm(10, 6), rnorm(10, 6.5))
+  )
+  plot <- plot_violin_box(df, value_column = "Value", group_column = "Species",
+                          title = "Violin + Box + Jitter")
+  expect_s3_class(plot, "ggplot")
+  labs <- ggplot2::get_labs(plot)
+  expect_equal(labs$x, "Species")
+  expect_equal(labs$y, "Value")
+  expect_equal(labs$title, "Violin + Box + Jitter")
+  # renders to a file without error (accepts a real data path)
+  tmp <- tempfile(fileext = ".pdf")
+  plot_violin_box(df, value_column = "Value", group_column = "Species",
+                  output_file = tmp)
+  expect_true(file.exists(tmp))
+})
+
+test_that("plot_violin_box supports faceting and plot type", {
+  df <- data.frame(
+    Species = rep(c("setosa", "virginica"), each = 20),
+    Feature = rep(c("Sepal.Length", "Petal.Length"), each = 20),
+    Value = rnorm(40)
+  )
+  plot <- plot_violin_box(df, value_column = "Value", group_column = "Species",
+                          facet_column = "Feature", plot_type = "violin",
+                          show_jitter = FALSE)
+  expect_s3_class(plot, "ggplot")
+  expect_s3_class(plot$facet, "FacetWrap")
+  b <- ggplot2::ggplot_build(plot)
+  expect_true(length(b$data) >= 1)
+})
+
+test_that("plot_violin_box validates inputs", {
+  df <- data.frame(Species = letters[1:6], x = letters[1:6], Value = rnorm(6))
+  expect_error(plot_violin_box(df, value_column = "nope"), "not a column")
+  expect_error(plot_violin_box(df, value_column = "x"), "must be numeric")
+  expect_error(plot_violin_box(df, group_column = "nope"), "not a column")
+  expect_error(plot_violin_box(df, jitter_alpha = -1), "between 0 and 1")
+})
+test_that("plot_scatter draws an overall scatter with correlation annotation", {
+  df <- data.frame(VarX = rnorm(30), VarY = rnorm(30) + 0.5)
+  plot <- plot_scatter(df, x_column = "VarX", y_column = "VarY",
+                       title = "Overall")
+  expect_s3_class(plot, "ggplot")
+  labs <- ggplot2::get_labs(plot)
+  expect_equal(labs$x, "VarX")
+  expect_equal(labs$y, "VarY")
+  expect_equal(labs$title, "Overall")
+  tmp <- tempfile(fileext = ".pdf")
+  plot_scatter(df, x_column = "VarX", y_column = "VarY", output_file = tmp)
+  expect_true(file.exists(tmp))
+})
+
+test_that("plot_scatter supports grouping and custom correlations", {
+  df <- data.frame(Group = rep(c("A", "B"), each = 20),
+                   VarX = rnorm(40), VarY = rnorm(40))
+  plot <- plot_scatter(df, x_column = "VarX", y_column = "VarY",
+                       group_column = "Group", cor_method = "spearman",
+                       smooth_method = "loess")
+  expect_s3_class(plot, "ggplot")
+  expect_equal(ggplot2::get_labs(plot)$title, NULL)
+  b <- ggplot2::ggplot_build(plot)
+  expect_true(length(b$data) >= 2)
+})
+
+test_that("plot_scatter supports faceting", {
+  df <- data.frame(Group = rep(c("A", "B", "C"), each = 15),
+                   VarX = rnorm(45), VarY = rnorm(45))
+  plot <- plot_scatter(df, x_column = "VarX", y_column = "VarY",
+                       facet_column = "Group")
+  expect_s3_class(plot, "ggplot")
+  expect_s3_class(plot$facet, "FacetWrap")
+})
+
+test_that("plot_scatter validates inputs", {
+  df <- data.frame(VarX = rnorm(6), VarY = rnorm(6))
+  expect_error(plot_scatter(df, x_column = "nope"), "not a column")
+  expect_error(plot_scatter(df, point_alpha = -1), "between 0 and 1")
+  expect_error(plot_scatter(df, point_size = 0), "positive")
+  expect_scatter_missing <- tryCatch({ plot_scatter(df, group_column = "nope") },
+                                     error = function(e) e)
+  expect_true(inherits(expect_scatter_missing, "error"))
+})
+test_that("plot_distribution draws histogram, density, and both", {
+  df <- data.frame(Expression = rnorm(100, 5, 1), Group = rep(c("Control", "Treatment"), each = 50))
+  ph <- plot_distribution(df, plot_type = "histogram", title = "Hist")
+  expect_s3_class(ph, "ggplot")
+  expect_equal(ggplot2::get_labs(ph)$title, "Hist")
+  pd <- plot_distribution(df, plot_type = "density")
+  expect_s3_class(pd, "ggplot")
+  pb <- plot_distribution(df, plot_type = "both")
+  expect_s3_class(pb, "ggplot")
+  tmp <- tempfile(fileext = ".pdf")
+  plot_distribution(df, output_file = tmp)
+  expect_true(file.exists(tmp))
+})
+
+test_that("plot_distribution supports grouping by a second column", {
+  df <- data.frame(Expression = c(rnorm(50, 4), rnorm(50, 6)),
+                   Group = rep(c("Control", "Treatment"), each = 50))
+  plot <- plot_distribution(df, group_column = "Group")
+  expect_s3_class(plot, "ggplot")
+  b <- ggplot2::ggplot_build(plot)
+  expect_true(length(b$data) >= 1)
+})
+
+test_that("plot_distribution validates inputs", {
+  df <- data.frame(Expression = rnorm(20), Group = rep(c("A", "B"), 10))
+  expect_error(plot_distribution(df, value_column = "nope"), "not a column")
+  expect_error(plot_distribution(df, value_column = "Group"), "must be numeric")
+  expect_error(plot_distribution(df, bins = 0), "positive")
+  expect_error(plot_distribution(df, group_column = "nope"), "must be a column")
+  expect_error(plot_distribution(df, fill_color = ""), "colour")
+})
+test_that("plot_survival fits a Kaplan-Meier curve", {
+  df <- data.frame(
+    time = c(1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8),
+    event = c(1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1),
+    group = rep(c("Treat", "Placebo"), each = 8)
+  )
+  res <- plot_survival(df, time_column = "time", event_column = "event",
+                       group_column = "group", title = "KM")
+  expect_s3_class(res, "ggsurvplot")
+  expect_true(inherits(res[["plot"]], "ggplot"))
+  expect_equal(attr(res, "figure_width"), 10)
+})
+
+test_that("plot_survival supports faceting", {
+  df <- data.frame(
+    time = rep(c(1, 2, 3, 4, 5, 6, 7, 8), 4),
+    event = rep(c(1, 0, 1, 1, 0, 1, 1, 0), 4),
+    group = rep(c("A", "B"), each = 16),
+    stage = rep(c("I", "II", "I", "II"), each = 8)
+  )
+  res <- plot_survival(df, group_column = "group", facet_column = "stage")
+  # faceting makes ggsurvplot return a ggplt object
+  expect_true(is(res, "ggplot") || is(res, "ggsurvplot"))
+})
+
+test_that("plot_forest builds a Cox forest plot from a model", {
+  df <- data.frame(
+    time = c(4, 6, 5, 8, 3, 7, 9, 2),
+    event = c(1, 1, 0, 1, 1, 0, 1, 1),
+    group = c("A", "B", "A", "B", "A", "B", "A", "B"),
+    age = c(60, 55, 70, 65, 50, 68, 72, 58)
+  )
+  model <- survival::coxph(survival::Surv(time, event) ~ group + age, data = df)
+  plot <- plot_forest(model = model, data = df,
+                      formula = survival::Surv(time, event) ~ group + age)
+  expect_s3_class(plot, "ggplot")
+  expect_equal(ggplot2::get_labs(plot)$title, "Cox Regression Forest Plot")
+})
+
+test_that("plot_forest works from a precomputed hr_table", {
+  hr_table <- data.frame(
+    term = c("groupB", "age"),
+    HR = c(1.5, 1.1), lower = c(0.9, 0.9), upper = c(2.5, 1.4)
+  )
+  plot <- plot_forest(hr_table = hr_table)
+  expect_s3_class(plot, "ggplot")
+})
+
+test_that("plot_survival and plot_forest validate inputs", {
+  expect_error(plot_survival(data.frame(), group_column = "g"),
+               "not a column")
+  expect_error(plot_forest(), "Provide either")
+  expect_error(plot_forest(hr_table = data.frame(term = "x")), "missing column")
+})
+test_that("plot_manhattan accumulates chromosome positions", {
+  df <- data.frame(
+    CHR = c(1, 1, 2, 2, 3, 3),
+    BP = c(100, 500, 100, 900, 200, 800),
+    P = c(0.5, 0.001, 0.3, 0.01, 0.4, 0.05)
+  )
+  plot <- plot_manhattan(df, title = "Manhattan")
+  expect_s3_class(plot, "ggplot")
+  expect_equal(ggplot2::get_labs(plot)$title, "Manhattan")
+  tmp <- tempfile(fileext = ".pdf")
+  plot_manhattan(df, output_file = tmp)
+  expect_true(file.exists(tmp))
+})
+
+test_that("plot_qq computes lambda and draws the identity line", {
+  df <- data.frame(P = runif(200, 0.001, 1))
+  plot <- plot_qq(df, p_column = "P")
+  expect_s3_class(plot, "ggplot")
+  expect_match(ggplot2::get_labs(plot)$title, "lambda")
+  expect_true(any(vapply(plot$layers,
+                         function(l) inherits(l$geom, "GeomAbline"), logical(1))))
+})
+
+test_that("plot_manhattan and plot_qq validate inputs", {
+  df <- data.frame(CHR = 1, BP = 100, P = 0.5)
+  expect_error(plot_manhattan(df, chr_column = "nope"), "not a column")
+  expect_error(plot_manhattan(data.frame(CHR = "x", BP = "y", P = "z")),
+               "must be numeric")
+  expect_error(plot_qq(df, p_column = "nope"), "not a column")
+  expect_error(plot_qq(data.frame(P = c(0, 0))), "positive")
+})
+test_that("plot_sankey draws an alluvial/sankey diagram", {
+  df <- data.frame(
+    source = c("a", "a", "b", "b"),
+    target = c("x", "y", "x", "y"),
+    value = c(10, 5, 8, 12)
+  )
+  plot <- plot_sankey(df, title = "Sankey")
+  expect_s3_class(plot, "ggplot")
+  expect_equal(ggplot2::get_labs(plot)$title, "Sankey")
+  tmp <- tempfile(fileext = ".pdf")
+  plot_sankey(df, output_file = tmp)
+  expect_true(file.exists(tmp))
+})
+
+test_that("plot_sankey supports curve types and custom fill", {
+  df <- data.frame(source = c("a", "b"), target = c("x", "y"),
+                   value = c(5, 3), group = c("g1", "g2"))
+  plot <- plot_sankey(df, curve_type = "sigmoid", fill_column = "group")
+  expect_s3_class(plot, "ggplot")
+  expect_error(plot_sankey(df, curve_type = "bogus"), "should be one of")
+})
+
+test_that("plot_sankey validates inputs", {
+  df <- data.frame(source = "a", target = "x", value = 1)
+  expect_error(plot_sankey(df, source_column = "nope"), "not a column")
+  expect_error(plot_sankey(data.frame(source = "a", target = "x", value = "z")),
+               "must be numeric")
+  expect_error(plot_sankey(df, flow_alpha = 2), "between 0 and 1")
+})
+

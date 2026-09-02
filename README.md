@@ -21,6 +21,26 @@
 - `WGCNA_select_power()`：支持scale-free诊断优先或复刻镜像样本数规则。
 - `WGCNA_module_sample()`：无外部表型时输出模块ME与样本/时间分组关系。
 
+## 组学可视化（组学可视化百宝箱整合）
+
+自 0.3.0 起，将`组学可视化百宝箱`的绘图代码封装为一系列 `plot_*` 函数，
+统一接入 `choose_plot_style()` 样式、百宝箱配色和可选的 PDF/PNG 输出：
+
+- `plot_pca()`：PCA 得分图（分组置信椭圆、样本标签、PC 组合、方差解释轴）。
+- `plot_venn()`：二/三集合韦恩图（0/1 指示数据框或命名列表）。
+- `plot_violin_box()`：小提琴/箱线/jitter 分布图，支持分面。
+- `plot_scatter()`：散点图（趋势线、相关系数标注、分组、分面、边际分布）。
+- `plot_distribution()`：直方图/密度/叠加分布，支持分组。
+- `plot_survival()`：Kaplan-Meier 生存曲线（置信区间、log-rank P、风险表、分面）。
+- `plot_forest()`：Cox 回归森林图（从 `coxph` 模型或 HR 表）。
+- `plot_manhattan()`：GWAS 曼哈顿图（染色体累计位置、Bonferroni/suggestive 阈值）。
+- `plot_qq()`：观测 vs 期望 -log10(P) QQ 图（含基因组膨胀因子 λ）。
+- `plot_sankey()`：alluvial/桑基图（从长边表）。
+
+> 说明：11 号模块中的**和弦图**（`circlize` 设备绘图，不返回 ggplot 对象）与
+> **网络图**（依赖 `igraph`/`ggraph`/`tidygraph`）暂未封装为可复用函数，
+> 避免为包引入尚未声明的重量级依赖。
+
 ## WGCNA
 
 WGCNA模块位于`R/WGCNA.R`，以

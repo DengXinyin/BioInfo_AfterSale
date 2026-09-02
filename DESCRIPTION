@@ -1,7 +1,7 @@
 Package: BioInfoAfterSale
 Type: Package
 Title: Reusable Bioinformatics After-Sales Analysis Workflows
-Version: 0.2.1
+Version: 0.3.0
 Authors@R: person("Xinyin", "Deng", role = c("aut", "cre"),
     email = "DengXinyin@users.noreply.github.com")
 Author: Xinyin Deng [aut, cre]
@@ -22,13 +22,19 @@ Imports:
     ComplexHeatmap,
     circlize,
     ggplot2,
+    ggpubr,
+    ggExtra,
     ggtext,
+    ggvenn,
     dplyr,
     readxl,
     ggtree,
+    ggalluvial,
     microbiomeMarker,
     phyloseq,
     vegan,
+    survival,
+    survminer,
     WGCNA,
     grDevices,
     graphics,
@@ -36,10 +42,12 @@ Imports:
     methods,
     tools
 Suggests:
+    ggrepel,
     org.Hs.eg.db,
     org.Mm.eg.db,
     org.Rn.eg.db,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    uwot
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 Roxygen: list(markdown = TRUE)

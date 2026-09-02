@@ -1,4 +1,13 @@
-# 相关热图与 RDA 示例
+# 相关热图与 RDA 总览
+
+本模块已拆分为 4 个独立函数脚本，并配有同名教程：
+
+- [plot_dot_heatmap](plot_dot_heatmap.md)
+- [plot_cross_heatmap](plot_cross_heatmap.md)
+- [plot_circular_heatmap](plot_circular_heatmap.md)
+- [plot_rda](plot_rda.md)
+
+下面保留完整的联合示例，便于一次性复现全部结果图。
 
 本页使用完全模拟的数据演示 3 种相关热图和 RDA。示例中的变量名、样本名和数值均为新生成内容，不来自任何项目数据。
 

@@ -1,3 +1,28 @@
+# BioInfoAfterSale 0.3.0
+
+- Added `plot_pca()`: principal-component analysis score plot with per-group
+  confidence ellipses, sample labels, configurable PC pair, and variance-explain
+  axis labels.
+- Added `plot_venn()`: two/three-set Venn diagram from a 0/1 indicator data
+  frame or a named list.
+- Added `plot_violin_box()`: violin/box/jitter distribution plot with optional
+  faceting.
+- Added `plot_scatter()`: scatter plot with trend line, correlation annotation,
+  grouping, faceting, and optional marginal density/box layers.
+- Added `plot_distribution()`: histogram, density, or overlaid distribution plot
+  with optional grouping.
+- Added `plot_survival()`: Kaplan-Meier curve with confidence intervals,
+  log-rank P value, risk table, and optional covariate faceting.
+- Added `plot_forest()`: Cox regression forest plot from a `coxph` model or a
+  precomputed hazard-ratio table.
+- Added `plot_manhattan()`: GWAS Manhattan plot with accumulated chromosome
+  positions and Bonferroni/suggestive threshold annotations.
+- Added `plot_qq()`: Q-Q plot of observed versus expected -log10 P values with
+  genomic inflation factor (lambda).
+- Added `plot_sankey()`: alluvial/Sankey diagram from a long-form edge table.
+- All `plot_*` functions accept a `style` object from `choose_plot_style()` and
+  optional PDF/PNG `output_file` output, following the package conventions.
+
 # BioInfoAfterSale 0.2.0
 
 - Added configurable X/Y axis labels, X-axis limits, breaks, and expansion.

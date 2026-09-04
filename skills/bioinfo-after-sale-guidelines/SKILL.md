@@ -85,4 +85,42 @@ description: 项目级 AI 辅助开发规范，适用于 BioInfo_AfterSale 的 R
 6. 执行示例并验证 PDF 输出、函数返回值和关键统计/分组结果。
 7. 汇报修改文件、验证命令、结果以及仍存在的限制。
 
+## R 包目录与多组学扩展规范
+
+后续整理或扩展本 R 包时，采用“代码平铺、文档分组、通用功能复用”的混合结构。本节是调整包内目录和新增功能时的参考；除非任务明确要求，不因应用本规范而批量移动现有文件。
+
+推荐目录结构：
+
+```text
+BioInfo_AfterSale/
+├── R/
+│   ├── common-PCA.R
+│   ├── common-Heatmap.R
+│   ├── common-Volcano.R
+│   ├── transcriptome-GSEA.R
+│   ├── transcriptome-GO.R
+│   ├── metagenome-AlphaDiversity.R
+│   ├── metagenome-BetaDiversity.R
+│   ├── microbiome-Composition.R
+│   ├── utils-data-check.R
+│   └── choose_plot_style.R
+├── docs/
+│   ├── common/
+│   ├── transcriptome/
+│   └── metagenome/
+├── inst/
+│   └── extdata/
+│       ├── transcriptome/
+│       └── metagenome/
+└── tests/
+    └── testthat/
+```
+
+- `R/` 必须保持顶层平铺，不按组学建立多层源码目录。使用文件名前缀体现归属：`common-*` 存放 PCA、PCoA、热图、箱线图、火山图等通用功能；`transcriptome-*`、`metagenome-*`、`microbiome-*` 存放组学特有功能；`utils-*` 存放输入检查、颜色和标签处理等内部工具。
+- 文件名前缀主要服务于开发者查找和维护。公开函数名保持简洁并遵循仓库既有 API 与命名规范，不强制添加 `transcriptome_`、`metagenome_` 等组学前缀。
+- `docs/` 和 `inst/extdata/` 按 `common`、`transcriptome`、`metagenome` 等用途或组学建立子目录，分别组织教程和示例数据；测试统一放在 `tests/testthat/`。
+- PCA、PCoA、热图等通用图形只保留一套共享绘图实现，不得为每种组学复制一份。不同组学的差异应在绘图前的预处理函数中解决，例如 `prepare_transcriptome_pca()`、`prepare_metagenome_pca()` 和 `prepare_proteome_pca()`；共享绘图函数（例如 `plot_pca()`）只负责统一的图形映射、样式和输出。
+- 新增功能前先判断其属于通用绘图、组学预处理还是组学特有分析，并优先复用现有函数与 `choose_plot_style.R`。共享逻辑存在问题时在共享实现中修复，不在多个组学教程或函数中重复补丁。
+- 现阶段维持单一 R 包。只有在不同组学依赖明显分化、完整安装过于臃肿、维护人员或发布周期独立，或函数规模已经难以管理时，才考虑拆分为 `BioInfoVizCore`、`BioInfoVizTranscriptome`、`BioInfoVizMetagenome` 等包；核心包保存通用绘图、配色和统一样式。
+
 参考： [Karpathy-inspired coding guidelines](https://github.com/multica-ai/andrej-karpathy-skills)。

@@ -30,6 +30,8 @@ Imports:
     readxl,
     ggtree,
     ggalluvial,
+    gridExtra,
+    igraph,
     microbiomeMarker,
     phyloseq,
     vegan,

@@ -238,7 +238,8 @@ plot_pca <- function(
   }
   if (show_labels) {
     plot <- plot + ggplot2::geom_text(
-      ggplot2::aes(label = .Sample), vjust = -1, size = 3, show.legend = FALSE
+      ggplot2::aes(label = .Sample), vjust = -1, size = 3,
+      family = style$global$font_family, show.legend = FALSE
     )
   }
 

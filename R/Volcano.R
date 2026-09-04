@@ -40,7 +40,7 @@ plot_volcano <- function(data, log2fc = "log2FC", pvalue = "pvalue", status = NU
     ggplot2::geom_vline(xintercept = c(-fc_cutoff, fc_cutoff), linetype = 2, color = "grey40") +
     ggplot2::geom_hline(yintercept = -log10(p_cutoff), linetype = 2, color = "grey40") +
     ggplot2::scale_color_manual(values = pal, labels = legend_labels, drop = FALSE) +
-    ggplot2::labs(x = expression(log[2](Fold~Change)), y = expression(-log[10](Pvalue)), title = title, color = legend_title) +
+    ggplot2::labs(x = "log2(Fold Change)", y = "-log10(Pvalue)", title = title, color = legend_title) +
     style$ggplot_theme + ggplot2::theme(
       legend.position = legend_inside,
       legend.background = ggplot2::element_blank(),

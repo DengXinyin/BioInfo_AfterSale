@@ -61,6 +61,13 @@
   values[positions]
 }
 
+.default_numeric_breaks <- function(values, n = 3L) {
+  values <- values[is.finite(values)]
+  if (!length(values)) return(numeric())
+  if (diff(range(values)) == 0) return(values[1])
+  unique(signif(seq(min(values), max(values), length.out = n), 3))
+}
+
 .escape_html <- function(values) {
   values <- gsub("&", "&amp;", values, fixed = TRUE)
   values <- gsub("<", "&lt;", values, fixed = TRUE)

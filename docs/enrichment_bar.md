@@ -118,7 +118,7 @@ bar_style <- choose_plot_style(
 p <- enrichment_bar(
   data = enrichment_table,
   style = bar_style,
-  output_file = "docs/images/enrichment_bar.png"
+  output_file = "docs/images/enrichment_bar.pdf"
 )
 
 p
@@ -127,8 +127,8 @@ p
 运行后会得到：
 
 ```r
-file.exists("enrichment_bar_results/enrichment_bar.png")
-file.info("enrichment_bar_results/enrichment_bar.png")$size
+file.exists("docs/images/enrichment_bar.pdf")
+file.info("docs/images/enrichment_bar.pdf")$size
 ```
 
 图中横轴为 `-log10(pvalue)`，条形越长表示 P 值越小；左侧圆圈大小和圆圈中的
@@ -143,7 +143,7 @@ enrichment_bar(
   data = enrichment_table,
   style = bar_style,
   gene_scale = 0,
-  output_file = "docs/images/enrichment_bar_without_genes.png"
+  output_file = "docs/images/enrichment_bar_without_genes.pdf"
 )
 ```
 
@@ -175,7 +175,7 @@ bottom_style <- choose_plot_style(
 enrichment_bar(
   data = enrichment_table,
   style = bottom_style,
-  output_file = "docs/images/enrichment_bar_bottom_legend.png"
+  output_file = "docs/images/enrichment_bar_bottom_legend.pdf"
 )
 ```
 
@@ -189,7 +189,7 @@ my_table <- readxl::read_excel("my_enrichment_result.xlsx")
 enrichment_bar(
   data = my_table,
   style = bar_style,
-  output_file = "docs/images/my_enrichment_bar.png"
+  output_file = "docs/images/my_enrichment_bar.pdf"
 )
 ```
 

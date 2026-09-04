@@ -25,6 +25,6 @@ venn_sets <- list(
 )
 
 plot_venn(venn_sets, title = "Differentially Expressed Gene Overlap",
-          style = after_sale_style, output_file = "docs/images/Venn.png",
+          style = after_sale_style, output_file = "docs/images/Venn.pdf",
           width = 8, height = 7)
 ```

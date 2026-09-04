@@ -35,7 +35,7 @@ p_pca <- plot_pca(
   sample = "Sample", variance = c(77.87, 7.60), ellipse = TRUE,
   show_labels = TRUE, label_repel = TRUE,
   title = "Principal Component Analysis", legend_inside = c(0.98, 0.98),
-  style = after_sale_style, output_file = "docs/images/PCA.png"
+  style = after_sale_style, output_file = "docs/images/PCA.pdf"
 )
 p_pca
 ```

@@ -291,7 +291,7 @@ p <- GO_KEGG_plot(
 原始 P 值而不是校正后 P 值筛选和绘图”。
 
 两种气泡图、三档 Gene count 图例和指定通路标签强调的完整示例，见
-[使用 `GO_KEGG_plot()` 绘制 GO/KEGG 富集气泡图](docs/GO_KEGG_plot.md)。
+[使用 `GO_KEGG_plot()` 绘制 GO/KEGG 富集气泡图](docs/GO_KEGG.md)。
 
 带分组色带、Gene count 气泡和基因标签的富集分析条形图示例，见
 [使用 `enrichment_bar()` 绘制富集分析条形图](docs/enrichment_bar.md)。
@@ -326,7 +326,7 @@ heatmap <- Heatmap_plot(
 `column_names_rot = 0` 为水平，`90` 为竖直，也可传入任意角度。基因行名默认
 使用斜体。`show_zscore_legend` 和 `show_group_legend` 可分别控制两类图例。
 
-完整示例见[使用 `Heatmap_plot()` 绘制带样本分组的表达热图](docs/Heatmap_plot.md)。
+完整示例见[使用 `Heatmap_plot()` 绘制带样本分组的表达热图](docs/Heatmap.md)。
 
 ## 使用本地 KEGG 数据
 

@@ -29,7 +29,7 @@ plot_volcano(
   p_cutoff = 0.05, status_colors = c("#E25659", "#D4D4D4", "#335372"),
   title = "TA4% vs Control", legend_title = NULL, legend_inside = c(0.82, 0.82),
   style = after_sale_style,
-  output_file = "docs/images/Volcano.png"
+  output_file = "docs/images/Volcano.pdf"
 )
 ```
 

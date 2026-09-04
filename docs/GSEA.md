@@ -30,6 +30,6 @@ plot_gsea(
   title = "Peptide cross-linking",
   statistics = c(NES = 2.22, `P value` = 6.1e-09, `Adjusted P` = 2.8e-06),
   colors = c("#E25659", "#335372"), style = after_sale_style,
-  output_file = "docs/images/GSEA.png", width = 9.2, height = 6.8
+  output_file = "docs/images/GSEA.pdf", width = 9.2, height = 6.8
 )
 ```

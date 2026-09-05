@@ -679,3 +679,51 @@ test_that("plot_sankey validates inputs", {
   expect_error(plot_sankey(df, flow_alpha = 2), "between 0 and 1")
 })
 
+
+test_that("plot_circular_heatmap draws a gene-by-sample ring heatmap", {
+  matrix <- matrix(
+    rnorm(40 * 8, mean = 8, sd = 1.5),
+    nrow = 40,
+    dimnames = list(paste0("Gene", 1:40), paste0("Sample", 1:8))
+  )
+  scaled <- plot_circular_heatmap(
+    matrix, scale = "row", cluster = TRUE, dend_side = "inside",
+    rownames_side = "outside", show_colnames = TRUE,
+    draw_plot = FALSE
+  )
+  expect_equal(dim(scaled), c(40, 8))
+  expect_true(all(is.finite(scaled)))
+  # row Z-scores: near-zero mean and unit sd per row
+  expect_equal(round(unname(rowMeans(scaled)), 6), rep(0, 40))
+  expect_equal(round(unname(apply(scaled, 1, stats::sd)), 6), rep(1, 40))
+})
+
+test_that("plot_circular_heatmap saves PDF output", {
+  matrix <- matrix(
+    rnorm(30 * 6),
+    nrow = 30,
+    dimnames = list(paste0("Gene", 1:30), paste0("Sample", 1:6))
+  )
+  output <- tempfile(fileext = ".pdf")
+  plot_circular_heatmap(
+    matrix, scale = "row", title = "Circular test",
+    output_file = output, figure_width = 8, figure_height = 8
+  )
+  expect_true(file.exists(output))
+  expect_gt(file.info(output)$size, 1000)
+})
+
+test_that("plot_circular_heatmap validates inputs", {
+  matrix <- matrix(rnorm(12), nrow = 4, dimnames = list(paste0("G", 1:4), paste0("S", 1:3)))
+  expect_error(plot_circular_heatmap(matrix, dend_side = "sideways"), "should be one of")
+  expect_error(plot_circular_heatmap(matrix, rownames_side = "sideways"), "should be one of")
+  expect_error(
+    plot_circular_heatmap(matrix, dend_side = "inside", rownames_side = "inside"),
+    "must differ"
+  )
+  expect_error(
+    plot_circular_heatmap(matrix, heatmap_colors = c("red", "blue")),
+    "exactly three"
+  )
+  expect_error(plot_circular_heatmap(matrix(rep(NA_real_, 4), nrow = 2)), "no finite")
+})

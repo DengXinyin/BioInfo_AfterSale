@@ -62,11 +62,10 @@ plot_venn(venn_sets, colors = c("#A3A4CA", "#E25659", "#335372"),
 
 n_rank <- 12000
 ranked_metric <- sort(rnorm(n_rank), decreasing = TRUE)
+names(ranked_metric) <- paste0("Gene", seq_len(n_rank))
 hit_positions <- sort(sample(seq_len(n_rank), 260))
-is_hit <- seq_len(n_rank) %in% hit_positions
-hit_weight <- abs(ranked_metric) * is_hit
-running_score <- cumsum(hit_weight / sum(hit_weight) - (!is_hit) / sum(!is_hit))
-plot_gsea(running_score = running_score, hits = hit_positions, ranked_metric = ranked_metric,
+gene_set <- names(ranked_metric)[hit_positions]
+plot_gsea_pathway(ranked_metric = ranked_metric, gene_set = gene_set,
           title = "Peptide cross-linking",
           statistics = c(NES = 2.22, `P value` = 6.1e-09, `Adjusted P` = 2.8e-06),
           colors = c("#E25659", "#335372"), style = style,
